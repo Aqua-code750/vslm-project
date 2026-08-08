@@ -76,7 +76,7 @@ if __name__ == "__main__":
     try:
         import gradio as gr
 
-        with gr.Blocks(title="Mog1 AI - PyTorch Language Model", theme=gr.themes.Soft()) as demo:
+        with gr.Blocks(title="Mog1 AI - PyTorch Language Model") as demo:
             gr.Markdown(
                 """
                 # Mog1 AI (VSLM) - Small Language Model
@@ -99,6 +99,6 @@ if __name__ == "__main__":
                 train_status = gr.Textbox(label="Auto-Train Status", interactive=False)
                 train_btn.click(fn=handle_auto_train, outputs=train_status)
 
-        demo.launch(share=True)
+        demo.launch(share=True, theme=gr.themes.Soft())
     except ImportError:
         print("Gradio not installed. Run `pip install gradio` to launch Web UI.")
