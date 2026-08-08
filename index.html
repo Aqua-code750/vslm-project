@@ -12,19 +12,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
-    <!-- Gradio Lite WebAssembly JS -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@gradio/lite@5.0.0/dist/lite.js"></script>
-
     <style>
         :root {
             --bg-dark: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-bg: rgba(30, 41, 59, 0.75);
             --accent-purple: #8b5cf6;
             --accent-indigo: #6366f1;
             --accent-pink: #ec4899;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border-color: rgba(255, 255, 255, 0.1);
+            --border-color: rgba(255, 255, 255, 0.12);
         }
 
         * {
@@ -37,8 +34,8 @@
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg-dark);
             background-image: 
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.18) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.18) 0px, transparent 50%);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
@@ -48,10 +45,10 @@
 
         header {
             width: 100%;
-            padding: 2rem 1rem;
+            padding: 2.5rem 1rem 2rem 1rem;
             text-align: center;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-color);
             margin-bottom: 2rem;
         }
@@ -60,32 +57,33 @@
             display: flex;
             gap: 10px;
             justify-content: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
             flex-wrap: wrap;
         }
 
         .badge {
             background: linear-gradient(135deg, var(--accent-indigo), var(--accent-purple));
-            padding: 4px 12px;
+            padding: 5px 14px;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
             letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
         h1 {
-            font-size: 2.8rem;
+            font-size: 3rem;
             font-weight: 800;
             background: linear-gradient(135deg, #a78bfa, #f472b6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.6rem;
         }
 
         p.subtitle {
             color: var(--text-muted);
-            font-size: 1.1rem;
-            max-width: 650px;
+            font-size: 1.15rem;
+            max-width: 700px;
             margin: 0 auto;
         }
 
@@ -101,7 +99,7 @@
             backdrop-filter: blur(16px);
             border: 1px solid var(--border-color);
             border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
             padding: 1.5rem;
             overflow: hidden;
         }
@@ -113,13 +111,42 @@
             border-radius: 16px;
         }
 
+        .notice-banner {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid var(--accent-purple);
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.95rem;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #ec4899, #8b5cf6);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.04);
+        }
+
         footer {
             width: 100%;
-            padding: 1.5rem;
+            padding: 1.8rem;
             text-align: center;
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             border-top: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.6);
         }
 
         footer a {
@@ -148,13 +175,16 @@
 
     <main>
         <div class="app-card">
-            <!-- Embedded Live Gradio Interface from Hugging Face Space -->
+            <div class="notice-banner">
+                <span>🤗 <strong>Hugging Face Space Live Container</strong></span>
+                <a href="https://huggingface.co/spaces/Aquaholograph2014/mog1-ai-vslm" target="_blank" class="restart-btn">⚡ Restart / Open Space</a>
+            </div>
             <iframe src="https://aquaholograph2014-mog1-ai-vslm.hf.space" title="Mog1 AI Gradio App"></iframe>
         </div>
     </main>
 
     <footer>
-        <p>Project Source: <a href="https://github.com/Aqua-code750/vslm-project" target="_blank">GitHub Repository</a> | Space: <a href="https://huggingface.co/spaces/Aquaholograph2014/mog1-ai-vslm" target="_blank">Hugging Face Spaces</a></p>
+        <p>GitHub Repository: <a href="https://github.com/Aqua-code750/vslm-project" target="_blank">Aqua-code750/vslm-project</a> | Space: <a href="https://huggingface.co/spaces/Aquaholograph2014/mog1-ai-vslm" target="_blank">Aquaholograph2014/mog1-ai-vslm</a></p>
     </footer>
 
 </body>
