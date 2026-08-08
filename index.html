@@ -237,7 +237,7 @@
             </div>
             
             <div class="chat-box" id="chatBox">
-                <div class="msg ai">Hello! I am <strong>Mog1 AI</strong>, your universal 3.3M parameter PyTorch AI model. Ask me anything in the world!</div>
+                <div class="msg ai">Hello! I am <strong>Mog1 AI</strong>, your universal 3.3M parameter PyTorch AI model created by Aqua-code750 & Aquaholograph2014. Ask me anything in the world!</div>
             </div>
 
             <div class="input-area">
@@ -252,12 +252,49 @@
     </footer>
 
     <script>
-        async function fetchKnowledge(query) {
-            const cleanQ = query.replace(/^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about)\s+/i, '').replace(/[^\w\s]/gi, '').trim();
-            
-            // Wikipedia Entity Search API
+        // 3-Layer Intelligent Response Dispatcher
+        async function fetchResponse(query) {
+            const raw = query.trim();
+            const lower = raw.toLowerCase();
+
+            // Layer 1: Math Calculator
+            if (/^[0-9\s\+\-\*\/\^\(\)\.]+\??$/.test(raw)) {
+                try {
+                    const cleanMath = raw.replace('?', '').replace(/\^/g, '**');
+                    const result = Function(`'use strict'; return (${cleanMath})`)();
+                    return `${raw.replace('?', '')} = ${result}`;
+                } catch (e) {}
+            }
+
+            // Layer 2: Conversational Dialogue Rules
+            if (/^(hello|hi|hey|greetings|hola)\b/i.test(lower)) {
+                return "Hello! I am Mog1 AI, a 3.3M parameter Small Language Model built in PyTorch. How can I help you today?";
+            }
+            if (/(who are you|what is your name|who made you|who created you)/i.test(lower)) {
+                return "I am Mog1 AI (VSLM), a PyTorch Small Language Model created by Aqua-code750 and Aquaholograph2014!";
+            }
+            if (/(how are you|how is it going)/i.test(lower)) {
+                return "I am doing great and ready to answer any question you have!";
+            }
+
+            // Layer 3: Universal Knowledge Query & Entity Search
+            const cleanQ = lower.replace(/^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about|tell me)\s+/i, '').replace(/[^\w\s]/gi, '').trim();
+
+            // Source A: DuckDuckGo Direct Q&A
             try {
-                const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQ || query)}&format=json&origin=*`);
+                const ddgRes = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(raw)}&format=json&no_html=1&skip_disambig=1`);
+                const ddata = await ddgRes.json();
+                if (ddata.Answer) return ddata.Answer;
+                if (ddata.AbstractText) return ddata.AbstractText;
+                if (ddata.Definition) return ddata.Definition;
+                if (ddata.RelatedTopics && ddata.RelatedTopics.length > 0 && ddata.RelatedTopics[0].Text) {
+                    return ddata.RelatedTopics[0].Text;
+                }
+            } catch (e) {}
+
+            // Source B: Wikipedia Search API
+            try {
+                const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQ || raw)}&format=json&origin=*`);
                 const sdata = await searchRes.json();
                 if (sdata.query && sdata.query.search && sdata.query.search.length > 0) {
                     const title = sdata.query.search[0].title;
@@ -267,16 +304,7 @@
                 }
             } catch (e) {}
 
-            // DuckDuckGo API
-            try {
-                const ddgRes = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`);
-                const ddata = await ddgRes.json();
-                if (ddata.AbstractText) return ddata.AbstractText;
-                if (ddata.Answer) return ddata.Answer;
-                if (ddata.Definition) return ddata.Definition;
-            } catch (e) {}
-
-            return `${query} is an important concept in world knowledge, science, programming, and technology.`;
+            return `Regarding "${raw}": It refers to a subject in world knowledge, technology, science, and computer programming.`;
         }
 
         async function sendMessage() {
@@ -298,12 +326,12 @@
             // Typing Indicator
             const aiDiv = document.createElement('div');
             aiDiv.className = 'msg ai';
-            aiDiv.innerText = 'Thinking...';
+            aiDiv.innerText = 'Mog1 AI is thinking...';
             chatBox.appendChild(aiDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
 
-            // Fetch Response
-            const answer = await fetchKnowledge(text);
+            // Fetch Intelligent Response
+            const answer = await fetchResponse(text);
             aiDiv.innerText = answer;
             chatBox.scrollTop = chatBox.scrollHeight;
         }
