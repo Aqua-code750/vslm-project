@@ -82,26 +82,44 @@ model, tokenizer = load_or_train_model()
 def clean_generated_text(text: str) -> str:
     if not text:
         return ""
-    # Strip prompt tags and training tokens
-    t = text.replace("User:", "").replace("Mog1:", "").replace("loss", "").replace("::", ":")
-    # Clean leading garbage punctuation
-    t = re.sub(r'^[,\.\s:\?\!\(\)\-–]+', '', t).strip()
-    # Remove repeated spaces and punctuation
-    t = re.sub(r'\s+', ' ', t)
+    # Strip prompt tags, training metrics, and format symbols
+    t = text
+    for artifact in ["User:", "Mog1:", "loss", "::", "textWhat", "function learning"]:
+        t = t.replace(artifact, "")
+    
+    # Clean leading/trailing punctuation and spaces
+    t = re.sub(r'^[,\.\s:\?\!\(\)\-–\_]+', '', t).strip()
+    t = re.sub(r'[,\.\s:\?\!\(\)\-–\_]+$', '', t).strip()
+    
+    # Fix broken punctuation spacing (e.g. "for ? :" -> "for?")
+    t = re.sub(r'\s+([,\.\?\!])', r'\1', t)
     t = re.sub(r'[\?\.\!]{2,}', '.', t)
-    # Capitalize first letter
+    t = re.sub(r'\s+', ' ', t)
+    
+    # Capitalize first letter and ensure ending punctuation
     if t:
         t = t[0].upper() + t[1:]
+        if not t.endswith(('.', '!', '?')):
+            t += '.'
     return t
 
 def is_coherent(text: str) -> bool:
-    if not text or len(text) < 8:
+    if not text or len(text) < 10:
         return False
-    # Check ratio of special chars vs letters
-    letters = len(re.findall(r'[a-zA-Z0-9]', text))
-    specials = len(re.findall(r'[,\.\?::\(\)\-\_]', text))
-    if letters == 0 or (specials / max(1, letters)) > 0.4:
+    
+    # Reject strings with garbled punctuation or prompt markers
+    if any(bad in text.lower() for bad in ["what for ?", "loss ai", "function learning", "::", "of? ?", "( of"]):
         return False
+        
+    words = text.split()
+    if len(words) < 3:
+        return False
+        
+    # Ensure high ratio of standard english words
+    valid_words = [w for w in words if re.match(r'^[a-zA-Z0-9\.\,\?\!\'\-]+$', w)]
+    if len(valid_words) / len(words) < 0.85:
+        return False
+        
     return True
 
 def respond(message: str, history, mode: str, max_tokens: int, temperature: float, top_p: float, top_k: int):
