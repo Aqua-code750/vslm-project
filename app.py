@@ -79,10 +79,46 @@ def load_or_train_model():
 
 model, tokenizer = load_or_train_model()
 
+def clean_generated_text(text: str) -> str:
+    if not text:
+        return ""
+    # Strip prompt tags and training tokens
+    t = text.replace("User:", "").replace("Mog1:", "").replace("loss", "").replace("::", ":")
+    # Clean leading garbage punctuation
+    t = re.sub(r'^[,\.\s:\?\!\(\)\-–]+', '', t).strip()
+    # Remove repeated spaces and punctuation
+    t = re.sub(r'\s+', ' ', t)
+    t = re.sub(r'[\?\.\!]{2,}', '.', t)
+    # Capitalize first letter
+    if t:
+        t = t[0].upper() + t[1:]
+    return t
+
+def is_coherent(text: str) -> bool:
+    if not text or len(text) < 8:
+        return False
+    # Check ratio of special chars vs letters
+    letters = len(re.findall(r'[a-zA-Z0-9]', text))
+    specials = len(re.findall(r'[,\.\?::\(\)\-\_]', text))
+    if letters == 0 or (specials / max(1, letters)) > 0.4:
+        return False
+    return True
+
 def respond(message: str, history, mode: str, max_tokens: int, temperature: float, top_p: float, top_k: int):
     if not message or not message.strip():
         return ""
 
+    lower_msg = message.strip().lower()
+
+    # 1. Direct Conversational Greetings & Small Talk
+    greetings = ["hello", "hi", "hey", "greetings", "hola", "howdy", "wassup", "what's up", "yo"]
+    if lower_msg in greetings or any(lower_msg.startswith(g + " ") for g in greetings) or lower_msg == "how are you":
+        return "Hello! I am Mog1 AI, your PyTorch AI assistant. How can I help you today?"
+
+    if any(q in lower_msg for q in ["who are you", "what is your name", "who created you", "who made you"]):
+        return "I am Mog1 AI (VSLM), a 3.3 Million Parameter PyTorch Small Language Model created by Aqua-code750 & Aquaholograph2014!"
+
+    # 2. Generate from PyTorch Neural Network
     formatted = f"User: {message.strip()}\nMog1:"
     context_tokens = tokenizer.encode(formatted)
     context = torch.tensor(context_tokens, dtype=torch.long, device=DEVICE).unsqueeze(0)
@@ -92,7 +128,7 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
     elif "Creative" in mode:
         temp, tk, tp = float(temperature), int(top_k), float(top_p)
     else: # Smart Mode
-        temp, tk, tp = 0.5, 15, 0.95
+        temp, tk, tp = 0.4, 10, 0.90
 
     out = model.generate(
         context,
@@ -100,34 +136,24 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
         temperature=temp,
         top_k=tk,
         top_p=tp,
-        repetition_penalty=1.25
+        repetition_penalty=1.35
     )
-    
+
     new_token_ids = out[0][len(context_tokens):].tolist()
     raw_res = tokenizer.decode(new_token_ids)
     res = raw_res.split("User:")[0].split("Mog1:")[0].strip()
+    clean_res = clean_generated_text(res)
 
-    lower_msg = message.strip().lower()
-    
-    # 1. Greetings & Small Talk -> Natural Conversational Response
-    greetings = ["hello", "hi", "hey", "greetings", "hola", "howdy", "wassup", "what's up", "yo"]
-    if lower_msg in greetings or any(lower_msg.startswith(g + " ") for g in greetings) or lower_msg == "how are you":
-        return "Hello! I am Mog1 AI, your PyTorch AI assistant. How can I help you today?"
-    
-    if "who are you" in lower_msg or "what is your name" in lower_msg or "who created you" in lower_msg:
-        return "I am Mog1 AI (VSLM), a 3.3 Million Parameter PyTorch Small Language Model created by Aqua-code750 & Aquaholograph2014!"
+    # If PyTorch model generated coherent grammar, return it!
+    if is_coherent(clean_res):
+        return clean_res
 
-    # 2. PyTorch Model Generation Output
-    if res and len(res) >= 5 and not res.startswith("User:"):
-        return res
+    # 3. For 2026/Current News & Knowledge questions or garbled generation -> Fetch Real-Time Facts
+    world_knowledge = fetch_universal_world_knowledge(message)
+    if world_knowledge:
+        return world_knowledge
 
-    # 3. Informational Knowledge Lookup (Only for explicit questions)
-    if any(k in lower_msg for k in ["who", "what", "where", "when", "why", "how", "explain", "tell me"]):
-        world_knowledge = fetch_universal_world_knowledge(message)
-        if world_knowledge:
-            return world_knowledge
-
-    return f"{message.strip()} is an interesting topic in science, programming, technology, and world knowledge."
+    return f"Here is what I know about {message.strip()}: Mog1 AI is continuously learning and updating its PyTorch model weights for this topic."
 
 def handle_oneshot_train():
     if is_auto_training():
