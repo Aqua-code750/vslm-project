@@ -23,7 +23,43 @@ def fetch_universal_world_knowledge(query: str) -> str:
     
     lower_q = q.lower()
     
-    # Special Handler for 'iPad kids' & digital screen time questions
+    # 1. Automated Math & Arithmetic Evaluator
+    if re.match(r'^[0-9\s\+\-\*\/\^\(\)\.]+\??$', q):
+        try:
+            clean_math = q.replace('?', '').replace('^', '**')
+            res = eval(clean_math, {"__builtins__": None}, {})
+            return f"🧮 **Mathematical Calculation**:\n\nInput  : `{q.replace('?', '')}`\nResult : **{res}**"
+        except Exception:
+            pass
+
+    # 2. Automated Weather API Lookup
+    if "weather" in lower_q or "temperature" in lower_q:
+        city_match = re.search(r'(?:weather|temperature)\s+(?:in|for|at)?\s*([a-zA-Z\s]+)', q, re.IGNORECASE)
+        if city_match:
+            city = city_match.group(1).strip()
+            try:
+                geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(city)}&count=1&language=en&format=json"
+                req = urllib.request.Request(geo_url, headers={'User-Agent': 'Mog1AI/1.0'})
+                with urllib.request.urlopen(req, timeout=3) as resp:
+                    gdata = json.loads(resp.read().decode())
+                    if 'results' in gdata and len(gdata['results']) > 0:
+                        lat = gdata['results'][0]['latitude']
+                        lon = gdata['results'][0]['longitude']
+                        name = gdata['results'][0]['name']
+                        country = gdata['results'][0].get('country', '')
+                        
+                        wurl = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
+                        with urllib.request.urlopen(urllib.request.Request(wurl, headers={'User-Agent': 'Mog1AI/1.0'}), timeout=3) as wresp:
+                            wdata = json.loads(wresp.read().decode())
+                            if 'current_weather' in wdata:
+                                cw = wdata['current_weather']
+                                temp_c = cw['temperature']
+                                wind = cw['windspeed']
+                                return f"🌤️ **Current Weather in {name}, {country}**:\n\n• **Temperature**: {temp_c}°C\n• **Wind Speed**: {wind} km/h"
+            except Exception:
+                pass
+
+    # 3. Special Topic Handlers (e.g. 'iPad kids')
     if "ipad kid" in lower_q or "ipad kids" in lower_q:
         return (
             "📱 **Understanding & Preventing 'iPad Kids' (Excessive Screen Time)**:\n\n"
@@ -37,6 +73,7 @@ def fetch_universal_world_knowledge(query: str) -> str:
             "3. **Model Healthy Habits**: Establish 'screen-free zones' (like dinner time and bedtime) for the whole family."
         )
 
+    # 4. Automated Wikipedia Search Engine
     clean_q = re.sub(r'^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about|why is|how to prevent|how to fix)\s+', '', q, flags=re.IGNORECASE).strip()
     clean_q = re.sub(r'[^\w\s]', '', clean_q).strip()
 
@@ -51,24 +88,25 @@ def fetch_universal_world_knowledge(query: str) -> str:
                 sum_req = urllib.request.Request(summary_url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
                 with urllib.request.urlopen(sum_req, timeout=3) as sum_resp:
                     sum_data = json.loads(sum_resp.read().decode())
-                    if 'extract' in sum_data and sum_data['extract']:
-                        return sum_data['extract']
+                    if 'extract' in sum_data and sum_data['extract'] and not 'refer to:' in sum_data['extract']:
+                        return f"📚 **{page_title}**:\n\n{sum_data['extract']}"
     except Exception:
         pass
 
+    # 5. Automated DuckDuckGo Web Search Engine
     try:
         url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(q)}&format=json&no_html=1&skip_disambig=1"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode())
             if 'AbstractText' in data and data['AbstractText']:
-                return data['AbstractText']
+                return f"🔍 **Web Search Summary**:\n\n{data['AbstractText']}"
             elif 'Answer' in data and data['Answer']:
-                return data['Answer']
+                return f"🔍 **Web Answer**:\n\n{data['Answer']}"
             elif 'Definition' in data and data['Definition']:
-                return data['Definition']
+                return f"🔍 **Definition**:\n\n{data['Definition']}"
             elif 'RelatedTopics' in data and len(data['RelatedTopics']) > 0 and 'Text' in data['RelatedTopics'][0]:
-                return data['RelatedTopics'][0]['Text']
+                return f"🔍 **Search Overview**:\n\n{data['RelatedTopics'][0]['Text']}"
     except Exception:
         pass
 
