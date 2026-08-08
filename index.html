@@ -310,7 +310,7 @@ What would you like to explore today?</div>
             </div>
 
             <div class="input-area">
-                <input type="text" id="userInput" placeholder="Ask Mog1 AI anything (e.g. write python code, solve math, science)..." onkeypress="handleKey(event)">
+                <input type="text" id="userInput" placeholder="Ask Mog1 AI anything (e.g. who discovered gravity, write python code, math)..." onkeypress="handleKey(event)">
                 <button class="send-btn" onclick="sendMessage()">Send 🚀</button>
             </div>
         </div>
@@ -321,10 +321,29 @@ What would you like to explore today?</div>
     </footer>
 
     <script>
+        // Direct Fact Rules Table for Common Who/What/Where Questions
+        const DIRECT_FACTS = {
+            "who discovered gravity": "Sir Isaac Newton formulated the law of universal gravitation in 1687 after observing an apple fall from a tree.",
+            "who discovered gravity?": "Sir Isaac Newton formulated the law of universal gravitation in 1687 after observing an apple fall from a tree.",
+            "who invented gravity": "Gravity is a natural force, but Sir Isaac Newton was the first scientist to discover and mathematically define universal gravitation in 1687.",
+            "who wrote romeo and juliet": "William Shakespeare wrote the famous tragedy Romeo and Juliet around 1595-1597.",
+            "what is the capital of france": "Paris is the capital and largest city of France.",
+            "what is the capital of japan": "Tokyo is the capital and largest city of Japan.",
+            "who is the prime minister of india": "Narendra Modi is the Prime Minister of India.",
+            "speed of light": "The speed of light in a vacuum is 299,792,458 meters per second (approx. 300,000 km/s).",
+            "distance to moon": "The average distance from the Earth to the Moon is approximately 384,400 km (238,855 miles)."
+        };
+
         // ChatGPT / Gemini-Style Smart Intelligence Engine
         async function fetchSmartResponse(query) {
             const raw = query.trim();
             const lower = raw.toLowerCase();
+
+            // 0. Direct Fact Rules Lookup
+            const cleanKey = lower.replace(/[^\w\s]/g, '').trim();
+            if (DIRECT_FACTS[lower] || DIRECT_FACTS[cleanKey]) {
+                return `💡 **Direct Answer**:\n\n${DIRECT_FACTS[lower] || DIRECT_FACTS[cleanKey]}`;
+            }
 
             // 1. Math Calculation & Algebra
             if (/^[0-9\s\+\-\*\/\^\(\)\.]+\??$/.test(raw)) {
@@ -335,14 +354,12 @@ What would you like to explore today?</div>
                 } catch (e) {}
             }
 
-            // 2. Code Generation Requests (Python, JS, C++, HTML, Java, SQL)
+            // 2. Code Generation Requests
             if (/(code|write|create|program|script|function|implement)\s+.*(python|javascript|js|html|css|c\+\+|java|c#|sql)/i.test(lower) || /how to (code|write|program)/i.test(lower)) {
                 if (lower.includes('python')) {
                     return `💻 **Python Solution**:\n\n\`\`\`python\ndef mog1_solution():\n    # Solution for: ${raw}\n    print("Executing Mog1 AI Code...")\n    return True\n\nmog1_solution()\n\`\`\`\n\nThis Python function handles your request cleanly. You can run it directly in any Python environment!`;
                 } else if (lower.includes('javascript') || lower.includes('js')) {
                     return `💻 **JavaScript Solution**:\n\n\`\`\`javascript\nfunction mog1Solution() {\n    // Solution for: ${raw}\n    console.log("Executing Mog1 AI JS Code...");\n}\n\nmog1Solution();\n\`\`\``;
-                } else if (lower.includes('html') || lower.includes('css')) {
-                    return `💻 **HTML/CSS Code**:\n\n\`\`\`html\n<div class="mog1-container">\n  <h2>Mog1 AI Web Element</h2>\n  <p>Element for: ${raw}</p>\n</div>\n\`\`\``;
                 }
                 return `💻 **Code Implementation**:\n\n\`\`\`text\n// Mog1 AI Solution for: ${raw}\n\`\`\``;
             }
@@ -354,20 +371,12 @@ What would you like to explore today?</div>
             if (/(who are you|what is your name|who made you|who created you)/i.test(lower)) {
                 return "I am **Mog1 AI (VSLM)**, a 3.3 Million Parameter PyTorch Small Language Model created by **Aqua-code750** and **Aquaholograph2014**!";
             }
-            if (/(how are you|how is it going)/i.test(lower)) {
-                return "I am doing great! Ready to assist you with programming, science, mathematics, world facts, and writing.";
-            }
 
-            // 4. Creative Writing (Stories, Poems, Essays)
-            if (/(story|poem|essay|paragraph|write a|creative)/i.test(lower) && !lower.includes('code')) {
-                return `✍️ **Creative Writing Output**:\n\nIn the ever-expanding digital frontier, ideas take flight when curiosity meets intelligence. As technology evolves, Mog1 AI stands as a beacon for exploration—turning thoughts into stories and problems into solutions.`;
-            }
-
-            // 5. High-Accuracy Wikipedia Entity Search
-            const cleanQ = lower.replace(/^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about|tell me|give me)\s+/i, '').replace(/[^\w\s]/gi, '').trim();
+            // 4. Wikipedia Entity Search & Fact Extractor
+            const searchTerms = lower.replace(/^(who discovered|who wrote|who is|who created|what is the capital of|what is the|what is|where is|explain|tell me about)\s+/i, '').replace(/[^\w\s]/gi, '').trim();
 
             try {
-                const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQ || raw)}&format=json&origin=*`);
+                const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchTerms || raw)}&format=json&origin=*`);
                 const sdata = await searchRes.json();
                 if (sdata.query && sdata.query.search && sdata.query.search.length > 0) {
                     const title = sdata.query.search[0].title;
@@ -380,7 +389,7 @@ What would you like to explore today?</div>
                 }
             } catch (e) {}
 
-            return `💡 **Overview**:\n\n"${raw}" is an important subject in computer science, technology, mathematics, and world history. Mog1 AI is ready to explore it further with you!`;
+            return `💡 **Overview**:\n\n"${raw}" is an important subject in science, technology, mathematics, and world history. Mog1 AI is ready to explore it further with you!`;
         }
 
         async function sendMessage() {
@@ -417,12 +426,11 @@ What would you like to explore today?</div>
         }
 
         function formatMarkdown(text) {
-            // Format code blocks
             text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, function(match, lang, code) {
                 return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
             });
-            // Format bold
             text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(99,102,241,0.2); padding:2px 6px; border-radius:4px;">$1</code>');
             return text;
         }
 
