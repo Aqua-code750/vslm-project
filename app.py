@@ -136,7 +136,14 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
     if any(q in lower_msg for q in ["who are you", "what is your name", "who created you", "who made you"]):
         return "I am Mog1 AI (VSLM), a 3.3 Million Parameter PyTorch Small Language Model created by Aqua-code750 & Aquaholograph2014!"
 
-    # 2. Generate from PyTorch Neural Network
+    # 2. Informational, Factual & News Questions -> Fetch Real-Time Factual Knowledge
+    is_question = any(k in lower_msg for k in ["who", "what", "where", "when", "why", "how", "explain", "tell me", "discover", "invent", "capital", "news", "2026"])
+    if is_question:
+        world_knowledge = fetch_universal_world_knowledge(message)
+        if world_knowledge:
+            return world_knowledge
+
+    # 3. Generate from PyTorch Neural Network (For Creative & Open-ended Prompts)
     formatted = f"User: {message.strip()}\nMog1:"
     context_tokens = tokenizer.encode(formatted)
     context = torch.tensor(context_tokens, dtype=torch.long, device=DEVICE).unsqueeze(0)
@@ -162,16 +169,14 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
     res = raw_res.split("User:")[0].split("Mog1:")[0].strip()
     clean_res = clean_generated_text(res)
 
-    # If PyTorch model generated coherent grammar, return it!
     if is_coherent(clean_res):
         return clean_res
 
-    # 3. For 2026/Current News & Knowledge questions or garbled generation -> Fetch Real-Time Facts
     world_knowledge = fetch_universal_world_knowledge(message)
     if world_knowledge:
         return world_knowledge
 
-    return f"Here is what I know about {message.strip()}: Mog1 AI is continuously learning and updating its PyTorch model weights for this topic."
+    return f"Mog1 AI is processing: '{message.strip()}'. Feel free to ask more about science, programming, or history!"
 
 def handle_oneshot_train():
     if is_auto_training():
