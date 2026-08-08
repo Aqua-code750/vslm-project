@@ -42,7 +42,7 @@ pipeline_tag: text-generation
 - 💻 **Phi-3 Style Code Generator**: Generates clean, commented, executable code for Python, JS, HTML/CSS, C++, SQL, and Bash.
 - 🌤️ **Live Real-Time Weather API**: Fetches real-time temperatures (°C) and weather conditions globally.
 - 🧮 **Automated Math & Reasoning**: Solves arithmetic expressions and step-by-step logic problems.
-- 📚 **Automated Search & Knowledge**: Real-time Wikipedia and DuckDuckGo integration for 2026 news and world facts.
+- 🛠️ **Autonomous Agent & Tool Execution Framework**: Includes `mog1_agent.py` SDK allowing developers to equip Mog1 AI with custom python tools (`calculator`, `python_interpreter`, `web_search`, `system_info`).
 
 ---
 

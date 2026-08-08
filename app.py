@@ -386,6 +386,21 @@ if __name__ == "__main__":
                     ],
                 )
 
+            with gr.Tab("Autonomous Agent & Tools"):
+                gr.Markdown("### 🛠️ Mog1 Autonomous Agent & Tool Framework")
+                gr.Markdown("Equip Mog1 AI with custom tools (`calculator`, `python_interpreter`, `web_search`, `system_info`).")
+                from mog1_agent import Mog1Agent
+                agent_instance = Mog1Agent()
+                
+                agent_input = gr.Textbox(label="Agent Prompt", placeholder="e.g. search who is Albert Einstein, run python print('Hello Agent'), or math 25*4...")
+                agent_btn = gr.Button("🚀 Run Autonomous Agent", variant="primary")
+                agent_output = gr.Markdown(label="Agent Result")
+                
+                def run_agent_wrapper(prompt):
+                    return agent_instance.run(prompt)
+                    
+                agent_btn.click(fn=run_agent_wrapper, inputs=agent_input, outputs=agent_output)
+
             with gr.Tab("Instant 1-Shot Pretrain & Management"):
                 gr.Markdown("### ⚡ Instant 1-Shot Pretraining Engine")
                 gr.Markdown("Click **1-Shot Instant Pretrain** to train or fine-tune Mog1 AI on the latest knowledge base in **1 SECOND**!")
