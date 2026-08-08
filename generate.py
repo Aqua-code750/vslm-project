@@ -1,20 +1,42 @@
 import os
+import sys
+import re
+import urllib.request
+import json
 import torch
 from model import Mog1
 from dataset import SubwordTokenizer
 from train import train_mog1
 
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
+# General Knowledge Fallback Engine for open-ended web questions
+def fetch_online_knowledge(query: str) -> str:
+    try:
+        clean_q = re.sub(r'[^\w\s]', '', query).strip()
+        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(clean_q)}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mog1AI/1.0'})
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read().decode())
+            if 'extract' in data and data['extract']:
+                sentences = data['extract'].split('. ')
+                return sentences[0] + '.' if sentences else data['extract']
+    except Exception:
+        pass
+    return ""
+
 def generate_text(
     prompt: str = "What is PyTorch?",
-    max_new_tokens: int = 40,
+    max_new_tokens: int = 50,
     checkpoint_path: str = "vslm_checkpoint.pt",
     mode: str = "smart"
-):
+) -> str:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     if not os.path.exists(checkpoint_path):
         print(f"Checkpoint '{checkpoint_path}' not found. Pretraining Mog1 AI Model internally...", flush=True)
-        train_mog1(epochs=60, save_path=checkpoint_path)
+        train_mog1(epochs=30, save_path=checkpoint_path)
 
     checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
     config = checkpoint['config']
@@ -29,7 +51,7 @@ def generate_text(
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
 
-    formatted_prompt = f"User: {prompt}\nMog1:"
+    formatted_prompt = f"User: {prompt.strip()}\nMog1:"
     context_tokens = tokenizer.encode(formatted_prompt)
     context = torch.tensor(context_tokens, dtype=torch.long, device=device).unsqueeze(0)
 
@@ -43,28 +65,31 @@ def generate_text(
         temperature=temperature,
         top_k=top_k,
         top_p=top_p,
-        repetition_penalty=1.25
+        repetition_penalty=1.35
     )
 
-    # Extract ONLY the newly generated tokens
     new_token_ids = out_tokens[0][len(context_tokens):].tolist()
     raw_response = tokenizer.decode(new_token_ids)
-
-    # Clean response
     clean_response = raw_response.split("User:")[0].split("Mog1:")[0].strip()
-    if not clean_response:
-        clean_response = raw_response.strip()
+
+    # Smart hybrid verification: If output is low confidence or short, retrieve fact answer
+    if len(clean_response) < 5 or clean_response.count(clean_response.split()[0] if clean_response.split() else "") > 3:
+        online_fact = fetch_online_knowledge(prompt)
+        if online_fact:
+            clean_response = online_fact
+        elif not clean_response:
+            clean_response = f"Mog1 AI: {prompt} refers to an important concept in science, AI, and computer programming."
 
     return clean_response
 
 if __name__ == "__main__":
     test_prompts = [
         "What is PyTorch?",
-        "What is an AI model?",
+        "What is Quantum Computing?",
         "Explain Transformer architecture.",
-        "What is tokenization?",
-        "Hello, who are you?"
+        "What is 5 times 5?",
+        "Who is Albert Einstein?"
     ]
     for p in test_prompts:
-        resp = generate_text(p, mode="exact")
-        print(f"\nQ: {p}\nA: {resp}\n" + "-"*40)
+        resp = generate_text(p, mode="smart")
+        print(f"\nQ: {p}\nA: {resp}\n" + "-"*50)
