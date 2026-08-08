@@ -341,6 +341,10 @@ What would you like to explore today?</div>
             const lower = raw.toLowerCase();
 
             // 0. Direct Fact Rules Lookup
+            if (lower.includes('ipad kid') || lower.includes('ipad kids')) {
+                return "📱 **Understanding & Preventing 'iPad Kids' (Excessive Screen Time)**:\n\n**Why It Happens (Causes)**:\n1. **Digital Pacification**: Tablets and short-form videos are frequently used by busy parents as quick distractions to calm restless toddlers.\n2. **Dopamine Loops**: Algorithmic video platforms feed continuous, high-stimulation content that keeps young minds hooked.\n3. **Lack of Alternative Engagement**: Limited physical play or interactive hobbies leads kids to default to digital screens.\n\n**How to Prevent & Fix It (Solutions)**:\n1. **Set Firm Daily Screen Limits**: Use built-in Screen Time locks (e.g. max 30-60 mins/day for non-educational content).\n2. **Encourage Hands-On Activities**: Replace tablet time with outdoor play, sports, reading, drawing, or board games.\n3. **Model Healthy Habits**: Establish 'screen-free zones' (like dinner time and bedtime) for the whole family.";
+            }
+
             const cleanKey = lower.replace(/[^\w\s]/g, '').trim();
             if (DIRECT_FACTS[lower] || DIRECT_FACTS[cleanKey]) {
                 return `💡 **Direct Answer**:\n\n${DIRECT_FACTS[lower] || DIRECT_FACTS[cleanKey]}`;

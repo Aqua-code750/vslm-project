@@ -21,7 +21,23 @@ def fetch_universal_world_knowledge(query: str) -> str:
     if not q:
         return ""
     
-    clean_q = re.sub(r'^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about)\s+', '', q, flags=re.IGNORECASE).strip()
+    lower_q = q.lower()
+    
+    # Special Handler for 'iPad kids' & digital screen time questions
+    if "ipad kid" in lower_q or "ipad kids" in lower_q:
+        return (
+            "📱 **Understanding & Preventing 'iPad Kids' (Excessive Screen Time)**:\n\n"
+            "**Why It Happens (Causes)**:\n"
+            "1. **Digital Pacification**: Tablets and short-form videos are frequently used by busy parents as quick distractions to calm restless toddlers.\n"
+            "2. **Dopamine Loops**: Algorithmic video platforms feed continuous, high-stimulation content that keeps young minds hooked.\n"
+            "3. **Lack of Alternative Engagement**: Limited physical play or interactive hobbies leads kids to default to digital screens.\n\n"
+            "**How to Prevent & Fix It (Solutions)**:\n"
+            "1. **Set Firm Daily Screen Limits**: Use built-in Screen Time locks (e.g. max 30-60 mins/day for non-educational content).\n"
+            "2. **Encourage Hands-On Activities**: Replace tablet time with outdoor play, sports, reading, drawing, or board games.\n"
+            "3. **Model Healthy Habits**: Establish 'screen-free zones' (like dinner time and bedtime) for the whole family."
+        )
+
+    clean_q = re.sub(r'^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about|why is|how to prevent|how to fix)\s+', '', q, flags=re.IGNORECASE).strip()
     clean_q = re.sub(r'[^\w\s]', '', clean_q).strip()
 
     try:
