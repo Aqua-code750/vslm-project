@@ -138,30 +138,67 @@ def is_coherent(text: str) -> bool:
         
     return True
 
+def extract_history_context(history) -> str:
+    if not history:
+        return ""
+    context_parts = []
+    # Support both list of tuples [user, bot] and list of dicts [{'role':..., 'content':...}]
+    for item in history[-3:]: # last 3 turns
+        if isinstance(item, (list, tuple)) and len(item) == 2:
+            u, b = item[0], item[1]
+            if u: context_parts.append(f"User: {u}")
+            if b: context_parts.append(f"Mog1: {b[:150]}") # Truncate long bot replies
+        elif isinstance(item, dict) and 'role' in item and 'content' in item:
+            role = "User" if item['role'] == 'user' else "Mog1"
+            context_parts.append(f"{role}: {item['content'][:150]}")
+    return "\n".join(context_parts)
+
 def respond(message: str, history, mode: str, max_tokens: int, temperature: float, top_p: float, top_k: int):
     if not message or not message.strip():
         return ""
 
     lower_msg = message.strip().lower()
 
-    # 1. Direct Conversational Greetings & Small Talk
+    # Build context from previous conversation turns for follow-up handling
+    past_context = extract_history_context(history)
+    
+    # 1. Direct Conversational Greetings & Small Talk (Only if no prior history context)
     greetings = ["hello", "hi", "hey", "greetings", "hola", "howdy", "wassup", "what's up", "yo"]
-    if lower_msg in greetings or any(lower_msg.startswith(g + " ") for g in greetings) or lower_msg == "how are you":
+    if (lower_msg in greetings or any(lower_msg.startswith(g + " ") for g in greetings) or lower_msg == "how are you") and not past_context:
         return "Hello! I am Mog1 AI, your PyTorch AI assistant. How can I help you today?"
 
-    if any(q in lower_msg for q in ["who are you", "what is your name", "who created you", "who made you"]):
+    if any(q in lower_msg for q in ["who are you", "what is your name", "who created you", "who made you"]) and not past_context:
         return "I am Mog1 AI (VSLM), a 3.3 Million Parameter PyTorch Small Language Model created by Aqua-code750 & Aquaholograph2014!"
+
+    # Detect follow-up intent (e.g. "tell me more", "explain step 1", "what about", "why is that")
+    followup_keywords = ["step", "more", "details", "explain that", "what about", "further", "elaborate", "why", "how so"]
+    is_followup = any(k in lower_msg for k in followup_keywords) and len(history) > 0
 
     # 2. Informational, Factual & News Questions -> Fetch Real-Time Factual Knowledge
     is_question = any(k in lower_msg for k in ["who", "what", "where", "when", "why", "how", "explain", "tell me", "discover", "invent", "capital", "news", "2026"])
-    if is_question:
-        world_knowledge = fetch_universal_world_knowledge(message)
+    
+    # If it's a follow-up query, append previous topic for contextual search
+    search_query = message.strip()
+    if is_followup and history:
+        last_turn = history[-1]
+        last_topic = last_turn[0] if isinstance(last_turn, (list, tuple)) else last_turn.get('content', '')
+        search_query = f"{last_topic} {message.strip()}"
+
+    if is_question or is_followup:
+        world_knowledge = fetch_universal_world_knowledge(search_query)
         if world_knowledge:
             return world_knowledge
 
-    # 3. Generate from PyTorch Neural Network (For Creative & Open-ended Prompts)
-    formatted = f"User: {message.strip()}\nMog1:"
+    # 3. Generate from PyTorch Neural Network with Full Multi-Turn Context
+    if past_context:
+        formatted = f"{past_context}\nUser: {message.strip()}\nMog1:"
+    else:
+        formatted = f"User: {message.strip()}\nMog1:"
+
     context_tokens = tokenizer.encode(formatted)
+    # Cap token window to max model sequence length (128)
+    if len(context_tokens) > 100:
+        context_tokens = context_tokens[-100:]
     context = torch.tensor(context_tokens, dtype=torch.long, device=DEVICE).unsqueeze(0)
 
     if "Exact" in mode:
