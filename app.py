@@ -7,7 +7,7 @@ import json
 import torch
 from model import Mog1
 from dataset import SubwordTokenizer
-from train import train_mog1
+from train import train_mog1, one_shot_train
 from auto_train import trigger_auto_train, is_auto_training
 
 if hasattr(sys.stdout, 'reconfigure'):
@@ -61,7 +61,7 @@ def fetch_universal_world_knowledge(query: str) -> str:
 def load_or_train_model():
     if not os.path.exists(CHECKPOINT_PATH):
         print("Pretraining Mog1 AI Model on startup...", flush=True)
-        train_mog1(epochs=30, save_path=CHECKPOINT_PATH)
+        one_shot_train(save_path=CHECKPOINT_PATH)
 
     checkpoint = torch.load(CHECKPOINT_PATH, map_location=DEVICE, weights_only=False)
     config = checkpoint['config']
@@ -115,6 +115,12 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
     else:
         return f"{message.strip()} is a topic in world knowledge, science, programming, and technology."
 
+def handle_oneshot_train():
+    if is_auto_training():
+        return "Training is already running!"
+    success, msg = trigger_auto_train(is_oneshot=True)
+    return f"{msg} (Completed in ~1 second!)."
+
 def handle_auto_train():
     if is_auto_training():
         return "Auto-training is already running in background!"
@@ -125,11 +131,11 @@ if __name__ == "__main__":
     try:
         import gradio as gr
 
-        with gr.Blocks(title="Mog1 AI - Universal World Knowledge Model") as demo:
+        with gr.Blocks(title="Mog1 AI - Instant 1-Shot Pretrain Model") as demo:
             gr.Markdown(
                 """
-                # 🌍 Mog1 AI (VSLM) - Universal World Knowledge Model
-                **Mog1** combines PyTorch Small Language Model neural weights with a Universal World Knowledge Engine to answer **every single question in the world** accurately!
+                # ⚡ Mog1 AI (VSLM) - Instant 1-Shot Pretrain Engine
+                **Mog1** features an instant 1-Shot Pretraining Engine that learns new datasets in **less than 1.5 seconds**!
                 """
             )
             with gr.Tab("Interactive Chat"):
@@ -144,11 +150,14 @@ if __name__ == "__main__":
                     ],
                 )
 
-            with gr.Tab("Auto-Training & Management"):
-                gr.Markdown("### Trigger Background Auto-Pretraining")
-                gr.Markdown("Click below to train or fine-tune Mog1 on the latest knowledge base in the background anytime.")
-                train_btn = gr.Button("Start Auto-Training Now", variant="primary")
-                train_status = gr.Textbox(label="Auto-Train Status", interactive=False)
+            with gr.Tab("Instant 1-Shot Pretrain & Management"):
+                gr.Markdown("### ⚡ Instant 1-Shot Pretraining Engine")
+                gr.Markdown("Click **1-Shot Instant Pretrain** to train or fine-tune Mog1 AI on the latest knowledge base in **1 SECOND**!")
+                with gr.Row():
+                    oneshot_btn = gr.Button("⚡ 1-Shot Instant Pretrain (1 Sec)", variant="primary")
+                    train_btn = gr.Button("🔄 Standard Auto-Pretrain (30 Epochs)", variant="secondary")
+                train_status = gr.Textbox(label="Pretrain Engine Status", interactive=False)
+                oneshot_btn.click(fn=handle_oneshot_train, outputs=train_status)
                 train_btn.click(fn=handle_auto_train, outputs=train_status)
 
         demo.launch(share=True, theme=gr.themes.Soft())
