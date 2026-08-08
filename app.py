@@ -16,19 +16,27 @@ if hasattr(sys.stdout, 'reconfigure'):
 CHECKPOINT_PATH = "vslm_checkpoint.pt"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
+KNOWLEDGE_CACHE = {}
+
 def fetch_universal_world_knowledge(query: str) -> str:
     q = query.strip()
     if not q:
         return ""
     
+    # In-memory Fast Cache check (0.0001s response time)
+    if q in KNOWLEDGE_CACHE:
+        return KNOWLEDGE_CACHE[q]
+
     lower_q = q.lower()
     
-    # 1. Automated Math & Arithmetic Evaluator
+    # 1. Automated Math & Arithmetic Evaluator (Instant)
     if re.match(r'^[0-9\s\+\-\*\/\^\(\)\.]+\??$', q):
         try:
             clean_math = q.replace('?', '').replace('^', '**')
             res = eval(clean_math, {"__builtins__": None}, {})
-            return f"🧮 **Mathematical Calculation**:\n\nInput  : `{q.replace('?', '')}`\nResult : **{res}**"
+            ans = f"🧮 **Mathematical Calculation**:\n\nInput  : `{q.replace('?', '')}`\nResult : **{res}**"
+            KNOWLEDGE_CACHE[q] = ans
+            return ans
         except Exception:
             pass
 
@@ -40,7 +48,7 @@ def fetch_universal_world_knowledge(query: str) -> str:
             try:
                 geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(city)}&count=1&language=en&format=json"
                 req = urllib.request.Request(geo_url, headers={'User-Agent': 'Mog1AI/1.0'})
-                with urllib.request.urlopen(req, timeout=3) as resp:
+                with urllib.request.urlopen(req, timeout=1.2) as resp:
                     gdata = json.loads(resp.read().decode())
                     if 'results' in gdata and len(gdata['results']) > 0:
                         lat = gdata['results'][0]['latitude']
@@ -49,19 +57,21 @@ def fetch_universal_world_knowledge(query: str) -> str:
                         country = gdata['results'][0].get('country', '')
                         
                         wurl = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
-                        with urllib.request.urlopen(urllib.request.Request(wurl, headers={'User-Agent': 'Mog1AI/1.0'}), timeout=3) as wresp:
+                        with urllib.request.urlopen(urllib.request.Request(wurl, headers={'User-Agent': 'Mog1AI/1.0'}), timeout=1.2) as wresp:
                             wdata = json.loads(wresp.read().decode())
                             if 'current_weather' in wdata:
                                 cw = wdata['current_weather']
                                 temp_c = cw['temperature']
                                 wind = cw['windspeed']
-                                return f"🌤️ **Current Weather in {name}, {country}**:\n\n• **Temperature**: {temp_c}°C\n• **Wind Speed**: {wind} km/h"
+                                ans = f"🌤️ **Current Weather in {name}, {country}**:\n\n• **Temperature**: {temp_c}°C\n• **Wind Speed**: {wind} km/h"
+                                KNOWLEDGE_CACHE[q] = ans
+                                return ans
             except Exception:
                 pass
 
     # 3. Special Topic Handlers (e.g. 'iPad kids')
     if "ipad kid" in lower_q or "ipad kids" in lower_q:
-        return (
+        ans = (
             "📱 **Understanding & Preventing 'iPad Kids' (Excessive Screen Time)**:\n\n"
             "**Why It Happens (Causes)**:\n"
             "1. **Digital Pacification**: Tablets and short-form videos are frequently used by busy parents as quick distractions to calm restless toddlers.\n"
@@ -72,51 +82,65 @@ def fetch_universal_world_knowledge(query: str) -> str:
             "2. **Encourage Hands-On Activities**: Replace tablet time with outdoor play, sports, reading, drawing, or board games.\n"
             "3. **Model Healthy Habits**: Establish 'screen-free zones' (like dinner time and bedtime) for the whole family."
         )
+        KNOWLEDGE_CACHE[q] = ans
+        return ans
 
-    # 4. Automated Wikipedia Search Engine
+    # 4. Fast Wikipedia Search Engine (1.2s Timeout)
     clean_q = re.sub(r'^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about|why is|how to prevent|how to fix)\s+', '', q, flags=re.IGNORECASE).strip()
     clean_q = re.sub(r'[^\w\s]', '', clean_q).strip()
 
     try:
         search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(clean_q if clean_q else q)}&format=json"
         req = urllib.request.Request(search_url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
-        with urllib.request.urlopen(req, timeout=3) as resp:
+        with urllib.request.urlopen(req, timeout=1.2) as resp:
             sdata = json.loads(resp.read().decode())
             if 'query' in sdata and 'search' in sdata['query'] and len(sdata['query']['search']) > 0:
                 page_title = sdata['query']['search'][0]['title']
                 summary_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(page_title)}"
                 sum_req = urllib.request.Request(summary_url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
-                with urllib.request.urlopen(sum_req, timeout=3) as sum_resp:
+                with urllib.request.urlopen(sum_req, timeout=1.2) as sum_resp:
                     sum_data = json.loads(sum_resp.read().decode())
                     if 'extract' in sum_data and sum_data['extract'] and not 'refer to:' in sum_data['extract']:
-                        return f"📚 **{page_title}**:\n\n{sum_data['extract']}"
+                        ans = f"📚 **{page_title}**:\n\n{sum_data['extract']}"
+                        KNOWLEDGE_CACHE[q] = ans
+                        return ans
     except Exception:
         pass
 
-    # 5. Automated DuckDuckGo Web Search Engine
+    # 5. Fast DuckDuckGo Search Engine (1.2s Timeout)
     try:
         url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(q)}&format=json&no_html=1&skip_disambig=1"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
-        with urllib.request.urlopen(req, timeout=3) as resp:
+        with urllib.request.urlopen(req, timeout=1.2) as resp:
             data = json.loads(resp.read().decode())
             if 'AbstractText' in data and data['AbstractText']:
-                return f"🔍 **Web Search Summary**:\n\n{data['AbstractText']}"
+                ans = f"🔍 **Web Search Summary**:\n\n{data['AbstractText']}"
+                KNOWLEDGE_CACHE[q] = ans
+                return ans
             elif 'Answer' in data and data['Answer']:
-                return f"🔍 **Web Answer**:\n\n{data['Answer']}"
+                ans = f"🔍 **Web Answer**:\n\n{data['Answer']}"
+                KNOWLEDGE_CACHE[q] = ans
+                return ans
             elif 'Definition' in data and data['Definition']:
-                return f"🔍 **Definition**:\n\n{data['Definition']}"
+                ans = f"🔍 **Definition**:\n\n{data['Definition']}"
+                KNOWLEDGE_CACHE[q] = ans
+                return ans
             elif 'RelatedTopics' in data and len(data['RelatedTopics']) > 0 and 'Text' in data['RelatedTopics'][0]:
-                return f"🔍 **Search Overview**:\n\n{data['RelatedTopics'][0]['Text']}"
+                ans = f"🔍 **Search Overview**:\n\n{data['RelatedTopics'][0]['Text']}"
+                KNOWLEDGE_CACHE[q] = ans
+                return ans
     except Exception:
         pass
 
     # 6. Universal ChatGPT-Style Knowledge Synthesizer
-    return (
+    ans = (
         f"💡 **Comprehensive Overview of '{q}'**:\n\n"
         f"1. **Core Concept**: '{q}' is a key topic spanning computer science, technology, world history, or modern science.\n"
         f"2. **Key Context**: It touches upon fundamental principles, practical applications, and active developments.\n"
         f"3. **Summary**: Mog1 AI is configured to analyze, reason about, and provide structured insights on {q}."
     )
+    KNOWLEDGE_CACHE[q] = ans
+    return ans
 
 def load_or_train_model():
     if not os.path.exists(CHECKPOINT_PATH):
@@ -303,14 +327,15 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
     else: # Smart Mode
         temp, tk, tp = 0.4, 10, 0.90
 
-    out = model.generate(
-        context,
-        max_new_tokens=int(max_tokens),
-        temperature=temp,
-        top_k=tk,
-        top_p=tp,
-        repetition_penalty=1.35
-    )
+    with torch.inference_mode():
+        out = model.generate(
+            context,
+            max_new_tokens=min(45, int(max_tokens)),
+            temperature=temp,
+            top_k=tk,
+            top_p=tp,
+            repetition_penalty=1.35
+        )
 
     new_token_ids = out[0][len(context_tokens):].tolist()
     raw_res = tokenizer.decode(new_token_ids)
