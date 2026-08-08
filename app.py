@@ -17,24 +17,31 @@ CHECKPOINT_PATH = "vslm_checkpoint.pt"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def fetch_universal_world_knowledge(query: str) -> str:
-    query_clean = re.sub(r'[^\w\s]', '', query).strip()
-    if not query_clean:
+    q = query.strip()
+    if not q:
         return ""
+    
+    clean_q = re.sub(r'^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about)\s+', '', q, flags=re.IGNORECASE).strip()
+    clean_q = re.sub(r'[^\w\s]', '', clean_q).strip()
 
     try:
-        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(query_clean)}"
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
+        search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(clean_q if clean_q else q)}&format=json"
+        req = urllib.request.Request(search_url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
         with urllib.request.urlopen(req, timeout=3) as resp:
-            data = json.loads(resp.read().decode())
-            if 'extract' in data and data['extract']:
-                extract = data['extract']
-                sentences = extract.split('. ')
-                return sentences[0] + '.' if len(sentences) > 0 else extract
+            sdata = json.loads(resp.read().decode())
+            if 'query' in sdata and 'search' in sdata['query'] and len(sdata['query']['search']) > 0:
+                page_title = sdata['query']['search'][0]['title']
+                summary_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(page_title)}"
+                sum_req = urllib.request.Request(summary_url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
+                with urllib.request.urlopen(sum_req, timeout=3) as sum_resp:
+                    sum_data = json.loads(sum_resp.read().decode())
+                    if 'extract' in sum_data and sum_data['extract']:
+                        return sum_data['extract']
     except Exception:
         pass
 
     try:
-        url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(query)}&format=json&no_html=1&skip_disambig=1"
+        url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(q)}&format=json&no_html=1&skip_disambig=1"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode())
@@ -44,6 +51,8 @@ def fetch_universal_world_knowledge(query: str) -> str:
                 return data['Answer']
             elif 'Definition' in data and data['Definition']:
                 return data['Definition']
+            elif 'RelatedTopics' in data and len(data['RelatedTopics']) > 0 and 'Text' in data['RelatedTopics'][0]:
+                return data['RelatedTopics'][0]['Text']
     except Exception:
         pass
 
