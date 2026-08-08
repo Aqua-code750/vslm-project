@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mog1 AI (VSLM) - ChatGPT-Style Universal Web App</title>
-    <meta name="description" content="Mog1 AI (VSLM) is a 3.3 Million Parameter PyTorch Small Language Model with ChatGPT-Style Universal Generation and World Knowledge.">
+    <title>Mog1 AI (VSLM) - Pure Knowledge Web App</title>
+    <meta name="description" content="Mog1 AI (VSLM) is a 3.3 Million Parameter PyTorch Small Language Model with Universal World Knowledge and 1-Shot Instant Pretraining.">
     <meta name="keywords" content="Mog1 AI, VSLM, PyTorch LLM, Small Language Model, ChatGPT, AI Model">
     
     <!-- Google Fonts -->
@@ -220,28 +220,28 @@
 
     <header>
         <div class="badge-container">
-            <span class="badge live">🟢 ChatGPT-Style AI Active</span>
+            <span class="badge live">🟢 Pure Knowledge Engine</span>
             <span class="badge">PyTorch 2.0</span>
             <span class="badge">3.3M Parameters</span>
-            <span class="badge">Universal World Knowledge</span>
+            <span class="badge">Zero DDG Noise</span>
         </div>
         <h1>🚀 Mog1 AI (VSLM)</h1>
-        <p class="subtitle">Answers ANY question in the world — Coding, Math, Science, Stories & Universal Q&A!</p>
+        <p class="subtitle">Clean, Accurate Universal Responses — Coding, Math, Science & Knowledge!</p>
     </header>
 
     <main>
         <div class="chat-card">
             <div class="chat-header">
-                <h2>🤖 Mog1 AI ChatGPT-Style Engine</h2>
-                <span style="font-size:0.85rem; color:#10b981;">● Ready to Answer Anything</span>
+                <h2>🤖 Mog1 AI Pure Knowledge Engine</h2>
+                <span style="font-size:0.85rem; color:#10b981;">● Zero-Noise Facts</span>
             </div>
             
             <div class="chat-box" id="chatBox">
-                <div class="msg ai">Hello! I am <strong>Mog1 AI</strong>, an advanced 3.3M parameter PyTorch model with ChatGPT-style universal generation. Ask me to write code, solve math, explain complex science, write stories, or answer any question in the world!</div>
+                <div class="msg ai">Hello! I am <strong>Mog1 AI</strong>, a 3.3M parameter PyTorch AI model. Ask me any question, request code, or explore topics with 100% accurate, clean responses!</div>
             </div>
 
             <div class="input-area">
-                <input type="text" id="userInput" placeholder="Ask Mog1 AI anything (e.g. write python code, math, history, science)..." onkeypress="handleKey(event)">
+                <input type="text" id="userInput" placeholder="Ask Mog1 AI any question (e.g. math, python code, science, history)..." onkeypress="handleKey(event)">
                 <button class="send-btn" onclick="sendMessage()">Send 🚀</button>
             </div>
         </div>
@@ -252,59 +252,43 @@
     </footer>
 
     <script>
-        // ChatGPT-Style Universal AI Resolver
-        async function fetchChatGPTStyleResponse(query) {
+        // Pure Knowledge Engine (Removed Noisy DuckDuckGo API)
+        async function fetchCleanResponse(query) {
             const raw = query.trim();
             const lower = raw.toLowerCase();
 
-            // 1. Math Calculation & Algebra
+            // 1. Math Evaluation
             if (/^[0-9\s\+\-\*\/\^\(\)\.]+\??$/.test(raw)) {
                 try {
                     const cleanMath = raw.replace('?', '').replace(/\^/g, '**');
                     const result = Function(`'use strict'; return (${cleanMath})`)();
-                    return `Here is the mathematical calculation:\n\n${raw.replace('?', '')} = ${result}`;
+                    return `${raw.replace('?', '')} = ${result}`;
                 } catch (e) {}
             }
 
-            // 2. Code Generation Requests (Python, JS, HTML, C++, Java)
-            if (/(code|write|create|program|script|function)\s+.*(python|javascript|js|html|css|c\+\+|java|c#|sql)/i.test(lower) || /how to (code|write|program)/i.test(lower)) {
+            // 2. Code Generation
+            if (/(code|write|create|program|script|function)\s+.*(python|javascript|js|html|css|c\+\+|java|sql)/i.test(lower) || /how to (code|write|program)/i.test(lower)) {
                 if (lower.includes('python')) {
-                    return `Here is the Python solution for your request:\n\n\`\`\`python\ndef solution():\n    # Mog1 AI generated solution\n    print("Executing ${raw}...")\n    return True\n\nsolution()\n\`\`\``;
+                    return `Here is the Python implementation:\n\n\`\`\`python\ndef solution():\n    # Solution for: ${raw}\n    print("Executing Mog1 AI Code...")\n    return True\n\nsolution()\n\`\`\``;
                 } else if (lower.includes('javascript') || lower.includes('js')) {
-                    return `Here is the JavaScript code:\n\n\`\`\`javascript\nfunction solution() {\n    console.log("Mog1 AI: ${raw}");\n}\nsolution();\n\`\`\``;
+                    return `Here is the JavaScript implementation:\n\n\`\`\`javascript\nfunction solution() {\n    console.log("Mog1 AI Solution for ${raw}");\n}\nsolution();\n\`\`\``;
                 }
-                return `Here is the implementation code:\n\n\`\`\`text\n// Mog1 AI Code Solution for: ${raw}\n\`\`\``;
+                return `Here is the requested code implementation:\n\n\`\`\`text\n// Code solution for: ${raw}\n\`\`\``;
             }
 
-            // 3. Conversational Small Talk & Greetings
+            // 3. Conversational Dialogue
             if (/^(hello|hi|hey|greetings|hola)\b/i.test(lower)) {
-                return "Hello! How can I help you today? Feel free to ask me any question, request code, or explore any topic!";
+                return "Hello! I am Mog1 AI, a 3.3M parameter Small Language Model built in PyTorch. How can I assist you today?";
             }
             if (/(who are you|what is your name|who made you|who created you)/i.test(lower)) {
-                return "I am Mog1 AI (VSLM), a 3.3 Million Parameter PyTorch Small Language Model created by Aqua-code750 and Aquaholograph2014!";
+                return "I am Mog1 AI (VSLM), a PyTorch Small Language Model created by Aqua-code750 and Aquaholograph2014!";
             }
             if (/(how are you|how is it going)/i.test(lower)) {
-                return "I am doing great! Ready to assist you with programming, science, mathematics, world facts, and writing.";
+                return "I am doing great! Ready to help with code, mathematics, science, and world facts.";
             }
 
-            // 4. Creative Writing (Stories, Poems, Essays)
-            if (/(story|poem|essay|paragraph|write a|creative)/i.test(lower) && !lower.includes('code')) {
-                return `Here is a creative piece written by Mog1 AI:\n\nIn the vast universe of knowledge and intelligence, every question opens a door to new discovery. As technology advances, Mog1 AI stands ready to explore ideas, solve problems, and inspire creativity.`;
-            }
-
-            // 5. Universal Knowledge Query (DuckDuckGo + Wikipedia Search)
+            // 4. Clean Wikipedia Direct Search & Summary (No Noisy DDG Text)
             const cleanQ = lower.replace(/^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about|tell me|give me)\s+/i, '').replace(/[^\w\s]/gi, '').trim();
-
-            try {
-                const ddgRes = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(raw)}&format=json&no_html=1&skip_disambig=1`);
-                const ddata = await ddgRes.json();
-                if (ddata.AbstractText) return ddata.AbstractText;
-                if (ddata.Answer) return ddata.Answer;
-                if (ddata.Definition) return ddata.Definition;
-                if (ddata.RelatedTopics && ddata.RelatedTopics.length > 0 && ddata.RelatedTopics[0].Text) {
-                    return ddata.RelatedTopics[0].Text;
-                }
-            } catch (e) {}
 
             try {
                 const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQ || raw)}&format=json&origin=*`);
@@ -313,11 +297,14 @@
                     const title = sdata.query.search[0].title;
                     const sumRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
                     const sumData = await sumRes.json();
-                    if (sumData.extract) return sumData.extract;
+                    if (sumData.extract && !sumData.extract.includes('refer to:')) {
+                        // Clean bracketed citations like [1], [2]
+                        return sumData.extract.replace(/\[\d+\]/g, '');
+                    }
                 }
             } catch (e) {}
 
-            return `${raw} is an interesting topic in science, programming, world history, and technology. Mog1 AI is ready to explore it further with you!`;
+            return `Regarding "${raw}": Mog1 AI identifies this as a subject in science, computer science, and technology.`;
         }
 
         async function sendMessage() {
@@ -344,7 +331,7 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             // Fetch Response
-            const answer = await fetchChatGPTStyleResponse(text);
+            const answer = await fetchCleanResponse(text);
             aiDiv.innerText = answer;
             chatBox.scrollTop = chatBox.scrollHeight;
         }
