@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mog1 AI (VSLM) - Universal PyTorch Small Language Model</title>
+    <meta name="description" content="Mog1 AI (VSLM) is a 3.3 Million Parameter PyTorch Small Language Model with Universal World Knowledge and 1-Shot Instant Pretraining.">
+    <meta name="keywords" content="Mog1 AI, VSLM, PyTorch LLM, Small Language Model, Gradio, AI Model">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Gradio Lite WebAssembly JS -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@gradio/lite@5.0.0/dist/lite.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent-purple: #8b5cf6;
+            --accent-indigo: #6366f1;
+            --accent-pink: #ec4899;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            padding: 2rem 1rem;
+            text-align: center;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .badge-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: linear-gradient(135deg, var(--accent-indigo), var(--accent-purple));
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        main {
+            width: 92%;
+            max-width: 1100px;
+            flex: 1;
+            margin-bottom: 3rem;
+        }
+
+        .app-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            padding: 1.5rem;
+            overflow: hidden;
+        }
+
+        iframe {
+            width: 100%;
+            height: 750px;
+            border: none;
+            border-radius: 16px;
+        }
+
+        footer {
+            width: 100%;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        footer a {
+            color: #a78bfa;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="badge-container">
+            <span class="badge">PyTorch 2.0</span>
+            <span class="badge">3.3M Parameters</span>
+            <span class="badge">Universal World Knowledge</span>
+            <span class="badge">1-Shot Pretrain</span>
+        </div>
+        <h1>🚀 Mog1 AI (VSLM)</h1>
+        <p class="subtitle">Built completely from scratch in PyTorch by Aqua-code750 & Aquaholograph2014</p>
+    </header>
+
+    <main>
+        <div class="app-card">
+            <!-- Embedded Live Gradio Interface from Hugging Face Space -->
+            <iframe src="https://aquaholograph2014-mog1-ai-vslm.hf.space" title="Mog1 AI Gradio App"></iframe>
+        </div>
+    </main>
+
+    <footer>
+        <p>Project Source: <a href="https://github.com/Aqua-code750/vslm-project" target="_blank">GitHub Repository</a> | Space: <a href="https://huggingface.co/spaces/Aquaholograph2014/mog1-ai-vslm" target="_blank">Hugging Face Spaces</a></p>
+    </footer>
+
+</body>
+</html>
