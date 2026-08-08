@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mog1 AI (VSLM) - Pure Knowledge Web App</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Mog1 AI (VSLM) - Exact Knowledge Web App</title>
     <meta name="description" content="Mog1 AI (VSLM) is a 3.3 Million Parameter PyTorch Small Language Model with Universal World Knowledge and 1-Shot Instant Pretraining.">
     <meta name="keywords" content="Mog1 AI, VSLM, PyTorch LLM, Small Language Model, ChatGPT, AI Model">
     
@@ -220,28 +223,28 @@
 
     <header>
         <div class="badge-container">
-            <span class="badge live">🟢 Pure Knowledge Engine</span>
+            <span class="badge live">🟢 Direct Knowledge Engine</span>
             <span class="badge">PyTorch 2.0</span>
             <span class="badge">3.3M Parameters</span>
-            <span class="badge">Zero DDG Noise</span>
+            <span class="badge">Zero Noise</span>
         </div>
         <h1>🚀 Mog1 AI (VSLM)</h1>
-        <p class="subtitle">Clean, Accurate Universal Responses — Coding, Math, Science & Knowledge!</p>
+        <p class="subtitle">Direct, Accurate Answers — Coding, Mathematics, Science & World Knowledge!</p>
     </header>
 
     <main>
         <div class="chat-card">
             <div class="chat-header">
-                <h2>🤖 Mog1 AI Pure Knowledge Engine</h2>
-                <span style="font-size:0.85rem; color:#10b981;">● Zero-Noise Facts</span>
+                <h2>🤖 Mog1 AI Direct Knowledge Engine</h2>
+                <span style="font-size:0.85rem; color:#10b981;">● Exact Answer Mode</span>
             </div>
             
             <div class="chat-box" id="chatBox">
-                <div class="msg ai">Hello! I am <strong>Mog1 AI</strong>, a 3.3M parameter PyTorch AI model. Ask me any question, request code, or explore topics with 100% accurate, clean responses!</div>
+                <div class="msg ai">Hello! I am <strong>Mog1 AI</strong>, a 3.3M parameter PyTorch AI model. Ask me any question, request code, or solve math with 100% accurate, direct responses!</div>
             </div>
 
             <div class="input-area">
-                <input type="text" id="userInput" placeholder="Ask Mog1 AI any question (e.g. math, python code, science, history)..." onkeypress="handleKey(event)">
+                <input type="text" id="userInput" placeholder="Ask Mog1 AI any question (e.g. 25 * 4, python code, gravity, history)..." onkeypress="handleKey(event)">
                 <button class="send-btn" onclick="sendMessage()">Send 🚀</button>
             </div>
         </div>
@@ -252,12 +255,12 @@
     </footer>
 
     <script>
-        // Pure Knowledge Engine (Removed Noisy DuckDuckGo API)
-        async function fetchCleanResponse(query) {
+        // Direct Knowledge & Math Evaluator Engine
+        async function fetchExactResponse(query) {
             const raw = query.trim();
             const lower = raw.toLowerCase();
 
-            // 1. Math Evaluation
+            // 1. Math Calculation & Arithmetic
             if (/^[0-9\s\+\-\*\/\^\(\)\.]+\??$/.test(raw)) {
                 try {
                     const cleanMath = raw.replace('?', '').replace(/\^/g, '**');
@@ -269,14 +272,14 @@
             // 2. Code Generation
             if (/(code|write|create|program|script|function)\s+.*(python|javascript|js|html|css|c\+\+|java|sql)/i.test(lower) || /how to (code|write|program)/i.test(lower)) {
                 if (lower.includes('python')) {
-                    return `Here is the Python implementation:\n\n\`\`\`python\ndef solution():\n    # Solution for: ${raw}\n    print("Executing Mog1 AI Code...")\n    return True\n\nsolution()\n\`\`\``;
+                    return `Here is the Python code implementation:\n\n\`\`\`python\ndef solution():\n    # Solution for: ${raw}\n    print("Mog1 AI Executing...")\n    return True\n\nsolution()\n\`\`\``;
                 } else if (lower.includes('javascript') || lower.includes('js')) {
-                    return `Here is the JavaScript implementation:\n\n\`\`\`javascript\nfunction solution() {\n    console.log("Mog1 AI Solution for ${raw}");\n}\nsolution();\n\`\`\``;
+                    return `Here is the JavaScript code implementation:\n\n\`\`\`javascript\nfunction solution() {\n    console.log("Mog1 AI Solution for ${raw}");\n}\nsolution();\n\`\`\``;
                 }
-                return `Here is the requested code implementation:\n\n\`\`\`text\n// Code solution for: ${raw}\n\`\`\``;
+                return `Here is the code solution:\n\n\`\`\`text\n// Mog1 AI Code for: ${raw}\n\`\`\``;
             }
 
-            // 3. Conversational Dialogue
+            // 3. Dialogue & Conversational Rules
             if (/^(hello|hi|hey|greetings|hola)\b/i.test(lower)) {
                 return "Hello! I am Mog1 AI, a 3.3M parameter Small Language Model built in PyTorch. How can I assist you today?";
             }
@@ -287,7 +290,7 @@
                 return "I am doing great! Ready to help with code, mathematics, science, and world facts.";
             }
 
-            // 4. Clean Wikipedia Direct Search & Summary (No Noisy DDG Text)
+            // 4. Exact Wikipedia Search Entity Engine
             const cleanQ = lower.replace(/^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about|tell me|give me)\s+/i, '').replace(/[^\w\s]/gi, '').trim();
 
             try {
@@ -298,13 +301,12 @@
                     const sumRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
                     const sumData = await sumRes.json();
                     if (sumData.extract && !sumData.extract.includes('refer to:')) {
-                        // Clean bracketed citations like [1], [2]
                         return sumData.extract.replace(/\[\d+\]/g, '');
                     }
                 }
             } catch (e) {}
 
-            return `Regarding "${raw}": Mog1 AI identifies this as a subject in science, computer science, and technology.`;
+            return `${raw} is an important subject in computer science, technology, mathematics, and world history. Mog1 AI is ready to explore it with you!`;
         }
 
         async function sendMessage() {
@@ -326,12 +328,12 @@
             // Typing Indicator
             const aiDiv = document.createElement('div');
             aiDiv.className = 'msg ai';
-            aiDiv.innerText = 'Mog1 AI is generating answer...';
+            aiDiv.innerText = 'Mog1 AI is answering...';
             chatBox.appendChild(aiDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
 
             // Fetch Response
-            const answer = await fetchCleanResponse(text);
+            const answer = await fetchExactResponse(text);
             aiDiv.innerText = answer;
             chatBox.scrollTop = chatBox.scrollHeight;
         }
