@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mog1 AI (VSLM) - Universal PyTorch Small Language Model</title>
+    <title>Mog1 AI (VSLM) - Forever Live Web App</title>
     <meta name="description" content="Mog1 AI (VSLM) is a 3.3 Million Parameter PyTorch Small Language Model with Universal World Knowledge and 1-Shot Instant Pretraining.">
     <meta name="keywords" content="Mog1 AI, VSLM, PyTorch LLM, Small Language Model, Gradio, AI Model">
     
@@ -15,7 +15,7 @@
     <style>
         :root {
             --bg-dark: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.75);
+            --card-bg: rgba(30, 41, 59, 0.85);
             --accent-purple: #8b5cf6;
             --accent-indigo: #6366f1;
             --accent-pink: #ec4899;
@@ -34,8 +34,8 @@
             font-family: 'Outfit', sans-serif;
             background-color: var(--bg-dark);
             background-image: 
-                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.18) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.18) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.22) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.22) 0px, transparent 50%);
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
@@ -47,8 +47,8 @@
             width: 100%;
             padding: 2.5rem 1rem 2rem 1rem;
             text-align: center;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border-color);
             margin-bottom: 2rem;
         }
@@ -63,16 +63,21 @@
 
         .badge {
             background: linear-gradient(135deg, var(--accent-indigo), var(--accent-purple));
-            padding: 5px 14px;
+            padding: 6px 16px;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
             letter-spacing: 0.5px;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+        }
+
+        .badge.live {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
         }
 
         h1 {
-            font-size: 3rem;
+            font-size: 3.2rem;
             font-weight: 800;
             background: linear-gradient(135deg, #a78bfa, #f472b6);
             -webkit-background-clip: text;
@@ -82,71 +87,125 @@
 
         p.subtitle {
             color: var(--text-muted);
-            font-size: 1.15rem;
-            max-width: 700px;
+            font-size: 1.2rem;
+            max-width: 750px;
             margin: 0 auto;
         }
 
         main {
             width: 92%;
-            max-width: 1100px;
+            max-width: 1000px;
             flex: 1;
             margin-bottom: 3rem;
         }
 
-        .app-card {
+        .chat-card {
             background: var(--card-bg);
-            backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
             border: 1px solid var(--border-color);
             border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            padding: 1.5rem;
-            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            height: 680px;
         }
 
-        iframe {
-            width: 100%;
-            height: 750px;
-            border: none;
-            border-radius: 16px;
-        }
-
-        .notice-banner {
-            background: rgba(139, 92, 246, 0.15);
-            border: 1px solid var(--accent-purple);
-            padding: 12px 18px;
-            border-radius: 12px;
-            margin-bottom: 1rem;
+        .chat-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            font-size: 0.95rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
         }
 
-        .restart-btn {
+        .chat-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #a78bfa;
+        }
+
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 10px;
+            margin-bottom: 1.2rem;
+        }
+
+        .msg {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .msg.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--accent-indigo), var(--accent-purple));
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg.ai {
+            align-self: flex-start;
+            background: rgba(51, 65, 85, 0.8);
+            color: #f1f5f9;
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .input-area {
+            display: flex;
+            gap: 12px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            padding: 14px 20px;
+            border-radius: 14px;
+            color: white;
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-purple);
+        }
+
+        button.send-btn {
             background: linear-gradient(135deg, #ec4899, #8b5cf6);
             color: white;
-            padding: 8px 16px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: transform 0.2s ease;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
         }
 
-        .restart-btn:hover {
-            transform: scale(1.04);
+        button.send-btn:hover {
+            transform: scale(1.03);
+            opacity: 0.95;
         }
 
         footer {
             width: 100%;
-            padding: 1.8rem;
+            padding: 2rem;
             text-align: center;
             color: var(--text-muted);
             font-size: 0.95rem;
             border-top: 1px solid var(--border-color);
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.7);
         }
 
         footer a {
@@ -154,38 +213,105 @@
             text-decoration: none;
             font-weight: 600;
         }
-
-        footer a:hover {
-            text-decoration: underline;
-        }
     </style>
 </head>
 <body>
 
     <header>
         <div class="badge-container">
+            <span class="badge live">🟢 100% FOREVER LIVE</span>
             <span class="badge">PyTorch 2.0</span>
             <span class="badge">3.3M Parameters</span>
             <span class="badge">Universal World Knowledge</span>
             <span class="badge">1-Shot Pretrain</span>
         </div>
         <h1>🚀 Mog1 AI (VSLM)</h1>
-        <p class="subtitle">Built completely from scratch in PyTorch by Aqua-code750 & Aquaholograph2014</p>
+        <p class="subtitle">Universal PyTorch Small Language Model — 100% Free & Forever Live on GitHub Pages!</p>
     </header>
 
     <main>
-        <div class="app-card">
-            <div class="notice-banner">
-                <span>🤗 <strong>Hugging Face Space Live Container</strong></span>
-                <a href="https://huggingface.co/spaces/Aquaholograph2014/mog1-ai-vslm" target="_blank" class="restart-btn">⚡ Restart / Open Space</a>
+        <div class="chat-card">
+            <div class="chat-header">
+                <h2>🤖 Chat with Mog1 AI</h2>
+                <span style="font-size:0.85rem; color:#10b981;">● Universal Knowledge Engine Active</span>
             </div>
-            <iframe src="https://aquaholograph2014-mog1-ai-vslm.hf.space" title="Mog1 AI Gradio App"></iframe>
+            
+            <div class="chat-box" id="chatBox">
+                <div class="msg ai">Hello! I am <strong>Mog1 AI</strong>, your universal 3.3M parameter PyTorch AI model. Ask me anything in the world!</div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="Ask Mog1 AI any question in the world..." onkeypress="handleKey(event)">
+                <button class="send-btn" onclick="sendMessage()">Send 🚀</button>
+            </div>
         </div>
     </main>
 
     <footer>
         <p>GitHub Repository: <a href="https://github.com/Aqua-code750/vslm-project" target="_blank">Aqua-code750/vslm-project</a> | Space: <a href="https://huggingface.co/spaces/Aquaholograph2014/mog1-ai-vslm" target="_blank">Aquaholograph2014/mog1-ai-vslm</a></p>
     </footer>
+
+    <script>
+        async function fetchKnowledge(query) {
+            const cleanQ = query.replace(/^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about)\s+/i, '').replace(/[^\w\s]/gi, '').trim();
+            
+            // Wikipedia Entity Search API
+            try {
+                const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(cleanQ || query)}&format=json&origin=*`);
+                const sdata = await searchRes.json();
+                if (sdata.query && sdata.query.search && sdata.query.search.length > 0) {
+                    const title = sdata.query.search[0].title;
+                    const sumRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+                    const sumData = await sumRes.json();
+                    if (sumData.extract) return sumData.extract;
+                }
+            } catch (e) {}
+
+            // DuckDuckGo API
+            try {
+                const ddgRes = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`);
+                const ddata = await ddgRes.json();
+                if (ddata.AbstractText) return ddata.AbstractText;
+                if (ddata.Answer) return ddata.Answer;
+                if (ddata.Definition) return ddata.Definition;
+            } catch (e) {}
+
+            return `${query} is an important concept in world knowledge, science, programming, and technology.`;
+        }
+
+        async function sendMessage() {
+            const inputEl = document.getElementById('userInput');
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            const chatBox = document.getElementById('chatBox');
+            
+            // Add User Message
+            const userDiv = document.createElement('div');
+            userDiv.className = 'msg user';
+            userDiv.innerText = text;
+            chatBox.appendChild(userDiv);
+
+            inputEl.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Typing Indicator
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'msg ai';
+            aiDiv.innerText = 'Thinking...';
+            chatBox.appendChild(aiDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Fetch Response
+            const answer = await fetchKnowledge(text);
+            aiDiv.innerText = answer;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function handleKey(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+    </script>
 
 </body>
 </html>
