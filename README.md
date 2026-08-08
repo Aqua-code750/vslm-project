@@ -4,7 +4,7 @@ emoji: 🚀
 colorFrom: indigo
 colorTo: purple
 sdk: gradio
-sdk_version: 3.50.0
+sdk_version: 5.0.0
 app_file: app.py
 pinned: false
 license: mit
@@ -118,10 +118,10 @@ Publish your trained model and Gradio app to Hugging Face Spaces & GitHub in 1 c
 
 ```bash
 # 1. Publish to GitHub
-python publish.py github https://github.com/Aqua-code750/vslm-project.git
+python publish.py github
 
 # 2. Publish to Hugging Face Spaces
-python publish.py hf Aquaholograph2014/mog1-ai-vslm <YOUR_HF_TOKEN>
+python publish.py hf <YOUR_HF_TOKEN>
 ```
 
 ---
