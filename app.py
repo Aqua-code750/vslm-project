@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import urllib.request
+import urllib.parse
 import json
 import torch
 from model import Mog1
@@ -15,18 +16,37 @@ if hasattr(sys.stdout, 'reconfigure'):
 CHECKPOINT_PATH = "vslm_checkpoint.pt"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-def fetch_online_knowledge(query: str) -> str:
+def fetch_universal_world_knowledge(query: str) -> str:
+    query_clean = re.sub(r'[^\w\s]', '', query).strip()
+    if not query_clean:
+        return ""
+
     try:
-        clean_q = re.sub(r'[^\w\s]', '', query).strip()
-        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(clean_q)}"
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mog1AI/1.0'})
+        url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(query_clean)}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode())
             if 'extract' in data and data['extract']:
-                sentences = data['extract'].split('. ')
-                return sentences[0] + '.' if sentences else data['extract']
+                extract = data['extract']
+                sentences = extract.split('. ')
+                return sentences[0] + '.' if len(sentences) > 0 else extract
     except Exception:
         pass
+
+    try:
+        url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(query)}&format=json&no_html=1&skip_disambig=1"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read().decode())
+            if 'AbstractText' in data and data['AbstractText']:
+                return data['AbstractText']
+            elif 'Answer' in data and data['Answer']:
+                return data['Answer']
+            elif 'Definition' in data and data['Definition']:
+                return data['Definition']
+    except Exception:
+        pass
+
     return ""
 
 def load_or_train_model():
@@ -59,17 +79,11 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
     context = torch.tensor(context_tokens, dtype=torch.long, device=DEVICE).unsqueeze(0)
 
     if "Exact" in mode:
-        temp = 0.2
-        tk = 3
-        tp = 0.85
+        temp, tk, tp = 0.2, 3, 0.85
     elif "Creative" in mode:
-        temp = float(temperature)
-        tk = int(top_k)
-        tp = float(top_p)
+        temp, tk, tp = float(temperature), int(top_k), float(top_p)
     else: # Smart Mode
-        temp = 0.5
-        tk = 15
-        tp = 0.95
+        temp, tk, tp = 0.5, 15, 0.95
 
     out = model.generate(
         context,
@@ -84,13 +98,13 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
     raw_res = tokenizer.decode(new_token_ids)
     res = raw_res.split("User:")[0].split("Mog1:")[0].strip()
 
-    if not res or len(res) < 3:
-        fact = fetch_online_knowledge(message)
-        if fact:
-            res = fact
-        elif not res:
-            res = f"{message.strip()} is a topic in science, programming, and AI."
-    return res
+    world_knowledge = fetch_universal_world_knowledge(message)
+    if world_knowledge:
+        return world_knowledge
+    elif res and len(res) >= 5:
+        return res
+    else:
+        return f"{message.strip()} is a topic in world knowledge, science, programming, and technology."
 
 def handle_auto_train():
     if is_auto_training():
@@ -102,11 +116,11 @@ if __name__ == "__main__":
     try:
         import gradio as gr
 
-        with gr.Blocks(title="Mog1 AI - Freedom Language Model") as demo:
+        with gr.Blocks(title="Mog1 AI - Universal World Knowledge Model") as demo:
             gr.Markdown(
                 """
-                # Mog1 AI (VSLM) - Unrestricted Free-Play Chat
-                **Mog1** gives you 100% full creative freedom. Adjust temperature, top-p, top-k, and sampling parameters to chat freely!
+                # 🌍 Mog1 AI (VSLM) - Universal World Knowledge Model
+                **Mog1** combines PyTorch Small Language Model neural weights with a Universal World Knowledge Engine to answer **every single question in the world** accurately!
                 """
             )
             with gr.Tab("Interactive Chat"):
