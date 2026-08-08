@@ -14,8 +14,8 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def load_or_train_model():
     if not os.path.exists(CHECKPOINT_PATH):
-        print("Checkpoint missing. Pretraining Mog1 AI Model internally...", flush=True)
-        train_mog1(epochs=60, save_path=CHECKPOINT_PATH)
+        print("Pretraining Mog1 AI Model on startup...", flush=True)
+        train_mog1(epochs=30, save_path=CHECKPOINT_PATH)
 
     checkpoint = torch.load(CHECKPOINT_PATH, map_location=DEVICE, weights_only=False)
     config = checkpoint['config']
@@ -41,7 +41,6 @@ def respond(message: str, history, mode: str, max_tokens: int):
     if not message or not message.strip():
         return ""
 
-    reload_model()
     formatted = f"User: {message.strip()}\nMog1:"
     context_tokens = tokenizer.encode(formatted)
     context = torch.tensor(context_tokens, dtype=torch.long, device=DEVICE).unsqueeze(0)
@@ -70,8 +69,8 @@ def respond(message: str, history, mode: str, max_tokens: int):
 def handle_auto_train():
     if is_auto_training():
         return "Auto-training is already running in background!"
-    success, msg = trigger_auto_train(epochs=50)
-    return f"{msg} (Model will reload automatically upon completion)."
+    success, msg = trigger_auto_train(epochs=30)
+    return f"{msg} (Model will reload upon completion)."
 
 if __name__ == "__main__":
     try:
@@ -89,7 +88,7 @@ if __name__ == "__main__":
                     fn=respond,
                     additional_inputs=[
                         gr.Radio(["Smart Mode (Creative & Fluent)", "Exact Factual Mode (Precise)"], label="Decoding Mode", value="Smart Mode (Creative & Fluent)"),
-                        gr.Slider(10, 100, value=45, step=5, label="Max New Tokens")
+                        gr.Slider(10, 80, value=40, step=5, label="Max New Tokens")
                     ],
                 )
 
