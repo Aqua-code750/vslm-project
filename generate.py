@@ -11,7 +11,6 @@ from train import train_mog1
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
-# General Knowledge Fallback Engine for open-ended web questions
 def fetch_online_knowledge(query: str) -> str:
     try:
         clean_q = re.sub(r'[^\w\s]', '', query).strip()
@@ -30,7 +29,10 @@ def generate_text(
     prompt: str = "What is PyTorch?",
     max_new_tokens: int = 50,
     checkpoint_path: str = "vslm_checkpoint.pt",
-    mode: str = "smart"
+    mode: str = "free",
+    temperature: float = 0.8,
+    top_p: float = 0.95,
+    top_k: int = 30
 ) -> str:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -55,41 +57,42 @@ def generate_text(
     context_tokens = tokenizer.encode(formatted_prompt)
     context = torch.tensor(context_tokens, dtype=torch.long, device=device).unsqueeze(0)
 
-    temperature = 0.2 if mode == "exact" else 0.5
-    top_k = 3 if mode == "exact" else 15
-    top_p = 0.85 if mode == "exact" else 0.95
+    if mode == "exact":
+        temp, tk, tp = 0.2, 3, 0.85
+    elif mode == "smart":
+        temp, tk, tp = 0.5, 15, 0.95
+    else: # "free"
+        temp, tk, tp = temperature, top_k, top_p
 
     out_tokens = model.generate(
         context,
         max_new_tokens=max_new_tokens,
-        temperature=temperature,
-        top_k=top_k,
-        top_p=top_p,
-        repetition_penalty=1.35
+        temperature=temp,
+        top_k=tk,
+        top_p=tp,
+        repetition_penalty=1.25
     )
 
     new_token_ids = out_tokens[0][len(context_tokens):].tolist()
     raw_response = tokenizer.decode(new_token_ids)
     clean_response = raw_response.split("User:")[0].split("Mog1:")[0].strip()
 
-    # Smart hybrid verification: If output is low confidence or short, retrieve fact answer
-    if len(clean_response) < 5 or clean_response.count(clean_response.split()[0] if clean_response.split() else "") > 3:
-        online_fact = fetch_online_knowledge(prompt)
-        if online_fact:
-            clean_response = online_fact
+    if not clean_response or len(clean_response) < 3:
+        fact = fetch_online_knowledge(prompt)
+        if fact:
+            clean_response = fact
         elif not clean_response:
-            clean_response = f"Mog1 AI: {prompt} refers to an important concept in science, AI, and computer programming."
+            clean_response = f"{prompt.strip()} is an interesting topic in technology and AI."
 
     return clean_response
 
 if __name__ == "__main__":
     test_prompts = [
+        "Write a creative story about space exploration.",
         "What is PyTorch?",
-        "What is Quantum Computing?",
-        "Explain Transformer architecture.",
         "What is 5 times 5?",
-        "Who is Albert Einstein?"
+        "Hello, tell me something interesting!"
     ]
     for p in test_prompts:
-        resp = generate_text(p, mode="smart")
-        print(f"\nQ: {p}\nA: {resp}\n" + "-"*50)
+        resp = generate_text(p, mode="free")
+        print(f"\nUser: {p}\nMog1: {resp}\n" + "-"*50)

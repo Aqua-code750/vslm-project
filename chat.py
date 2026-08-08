@@ -9,15 +9,16 @@ if hasattr(sys.stdout, 'reconfigure'):
 
 def main():
     print("=" * 60)
-    print("🚀 Mog1 AI (VSLM) Smart Interactive Terminal Chat")
+    print("🚀 Mog1 AI (VSLM) Unrestricted Freedom Interactive Terminal Chat")
     print("Commands:")
+    print("  /free       : Activate Unrestricted Free Creative Freedom Mode (Default)")
     print("  /smart      : Activate Smart Reasoning Mode")
     print("  /exact      : Activate Factual Precision Mode")
     print("  /auto-train : Trigger background model training")
     print("  /exit       : Quit chat")
     print("=" * 60)
 
-    mode = "smart"
+    mode = "free"
 
     while True:
         try:
@@ -32,6 +33,10 @@ def main():
         if prompt.lower() in ["/exit", "exit", "quit"]:
             print("Goodbye!")
             break
+        elif prompt.lower() == "/free":
+            mode = "free"
+            print("🎨 Switched to Unrestricted Free Creative Freedom Mode.")
+            continue
         elif prompt.lower() == "/smart":
             mode = "smart"
             print("💡 Switched to Smart Reasoning Mode.")
@@ -48,7 +53,7 @@ def main():
                 print(f"🚀 {msg}")
             continue
 
-        res = generate_text(prompt, max_new_tokens=50, mode=mode)
+        res = generate_text(prompt, max_new_tokens=60, mode=mode)
         print(f"Mog1: {res}")
 
 if __name__ == "__main__":

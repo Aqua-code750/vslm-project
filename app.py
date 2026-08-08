@@ -50,7 +50,7 @@ def load_or_train_model():
 
 model, tokenizer = load_or_train_model()
 
-def respond(message: str, history, mode: str, max_tokens: int):
+def respond(message: str, history, mode: str, max_tokens: int, temperature: float, top_p: float, top_k: int):
     if not message or not message.strip():
         return ""
 
@@ -58,29 +58,38 @@ def respond(message: str, history, mode: str, max_tokens: int):
     context_tokens = tokenizer.encode(formatted)
     context = torch.tensor(context_tokens, dtype=torch.long, device=DEVICE).unsqueeze(0)
 
-    temperature = 0.2 if "Exact" in mode else 0.5
-    top_k = 3 if "Exact" in mode else 15
-    top_p = 0.85 if "Exact" in mode else 0.95
+    if "Exact" in mode:
+        temp = 0.2
+        tk = 3
+        tp = 0.85
+    elif "Creative" in mode:
+        temp = float(temperature)
+        tk = int(top_k)
+        tp = float(top_p)
+    else: # Smart Mode
+        temp = 0.5
+        tk = 15
+        tp = 0.95
 
     out = model.generate(
         context,
         max_new_tokens=int(max_tokens),
-        temperature=temperature,
-        top_k=top_k,
-        top_p=top_p,
-        repetition_penalty=1.35
+        temperature=temp,
+        top_k=tk,
+        top_p=tp,
+        repetition_penalty=1.25
     )
     
     new_token_ids = out[0][len(context_tokens):].tolist()
     raw_res = tokenizer.decode(new_token_ids)
     res = raw_res.split("User:")[0].split("Mog1:")[0].strip()
 
-    if len(res) < 5 or res.count(res.split()[0] if res.split() else "") > 3:
+    if not res or len(res) < 3:
         fact = fetch_online_knowledge(message)
         if fact:
             res = fact
         elif not res:
-            res = f"{message.strip()} is an important concept in science, programming, and technology."
+            res = f"{message.strip()} is a topic in science, programming, and AI."
     return res
 
 def handle_auto_train():
@@ -93,19 +102,22 @@ if __name__ == "__main__":
     try:
         import gradio as gr
 
-        with gr.Blocks(title="Mog1 AI - Smart Language Model") as demo:
+        with gr.Blocks(title="Mog1 AI - Freedom Language Model") as demo:
             gr.Markdown(
                 """
-                # Mog1 AI (VSLM) - Smart Language Model
-                **Mog1** is a high-accuracy PyTorch Small Language Model with hybrid neural and online knowledge retrieval to answer **every question** accurately.
+                # Mog1 AI (VSLM) - Unrestricted Free-Play Chat
+                **Mog1** gives you 100% full creative freedom. Adjust temperature, top-p, top-k, and sampling parameters to chat freely!
                 """
             )
             with gr.Tab("Interactive Chat"):
                 chatbot = gr.ChatInterface(
                     fn=respond,
                     additional_inputs=[
-                        gr.Radio(["Smart Mode (Creative & Fluent)", "Exact Factual Mode (Precise)"], label="Decoding Mode", value="Smart Mode (Creative & Fluent)"),
-                        gr.Slider(10, 80, value=40, step=5, label="Max New Tokens")
+                        gr.Radio(["Free Creative Freedom Mode", "Smart Reasoning Mode", "Exact Factual Mode"], label="Generation Mode", value="Free Creative Freedom Mode"),
+                        gr.Slider(10, 150, value=50, step=5, label="Max New Tokens"),
+                        gr.Slider(0.1, 1.5, value=0.8, step=0.05, label="Temperature (Randomness & Freedom)"),
+                        gr.Slider(0.1, 1.0, value=0.95, step=0.05, label="Top-P (Nucleus Threshold)"),
+                        gr.Slider(1, 50, value=30, step=1, label="Top-K Candidate Window")
                     ],
                 )
 
