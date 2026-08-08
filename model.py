@@ -6,11 +6,11 @@ import torch.nn.functional as F
 class Mog1Config:
     def __init__(
         self,
-        vocab_size: int = 500,
-        n_embd: int = 384,
-        n_head: int = 12,
-        n_layer: int = 6,
-        block_size: int = 128,
+        vocab_size: int = 722,
+        n_embd: int = 256,
+        n_head: int = 8,
+        n_layer: int = 4,
+        block_size: int = 64,
         dropout: float = 0.05
     ):
         self.vocab_size = vocab_size

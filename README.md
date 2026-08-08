@@ -23,20 +23,20 @@ tags:
 pipeline_tag: text-generation
 ---
 
-# 🚀 Mog1 AI (VSLM) - Lightweight PyTorch Small Language Model
+# 🚀 Mog1 AI (VSLM) - 3.3M Parameter PyTorch Small Language Model
 
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Aquaholograph2014%2Fmog1--ai--vslm-blue)](https://huggingface.co/spaces/Aquaholograph2014/mog1-ai-vslm)
 [![GitHub](https://img.shields.io/badge/GitHub-Aqua--code750%2Fvslm--project-181717?logo=github)](https://github.com/Aqua-code750/vslm-project)
 
-**Mog1 AI (VSLM)** is an advanced, lightweight Small Language Model built completely **from scratch in PyTorch** with zero black-box dependencies. Created by **Aqua-code750** / **Aquaholograph2014**. Designed for high-speed local inference, multi-domain reasoning, free-form interactive chat, and automatic internal pretraining.
+**Mog1 AI (VSLM)** is an advanced, lightweight **3.3 Million Parameter** Small Language Model built completely **from scratch in PyTorch** with zero black-box dependencies. Created by **Aqua-code750** / **Aquaholograph2014**. Designed for high-speed local inference, multi-domain reasoning, free-form interactive chat, and automatic internal pretraining.
 
 ---
 
 ## 🌟 Key Features
 
-- 🧠 **Built From Scratch in PyTorch**: Pure PyTorch implementation of Decoder-Only Multi-Head Self-Attention Transformer blocks.
+- 🧠 **Built From Scratch in PyTorch**: Pure PyTorch implementation of Decoder-Only Multi-Head Self-Attention Transformer blocks (~3.3M parameters).
 - 📚 **Multi-Domain Internet Knowledge Base**: Pretrained on Computer Science, AI/ML, Python, Science, Math, History, General Knowledge, and Natural Dialogue.
 - 🔄 **Auto-Training Engine**: Internal automatic pretraining triggers and 1-click Web UI fine-tuning button to update knowledge anytime.
 - 💬 **Free-Form Interactive Chat**: Real-time CLI (`chat.py`) and Gradio Web UI (`app.py`) for natural conversational Q&A.
@@ -51,7 +51,7 @@ pipeline_tag: text-generation
 
 | Parameter | Specification |
 | :--- | :--- |
-| **Model Parameters** | ~3.5 Million Parameters |
+| **Model Parameters** | **3,354,624 Parameters (~3.3 Million)** |
 | **Architecture** | Decoder-Only Causal Transformer |
 | **Attention Mechanism** | 8 Multi-Head Self-Attention Heads |
 | **Embedding Dimension** | 256 |
@@ -98,30 +98,6 @@ python chat.py
 Generate answers programmatically for any prompt:
 ```bash
 python generate.py
-```
-
-### 4. Background Auto-Training & Pretraining
-Train or fine-tune Mog1 on updated text datasets anytime:
-```bash
-python train.py 60
-```
-Or run the background task manager:
-```bash
-python auto_train.py
-```
-
----
-
-## 🌐 Publish to Hugging Face & GitHub
-
-Publish your trained model and Gradio app to Hugging Face Spaces & GitHub in 1 click:
-
-```bash
-# 1. Publish to GitHub
-python publish.py github
-
-# 2. Publish to Hugging Face Spaces
-python publish.py hf <YOUR_HF_TOKEN>
 ```
 
 ---
