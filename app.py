@@ -99,6 +99,6 @@ if __name__ == "__main__":
                 train_status = gr.Textbox(label="Auto-Train Status", interactive=False)
                 train_btn.click(fn=handle_auto_train, outputs=train_status)
 
-        demo.launch()
+        demo.launch(share=True)
     except ImportError:
         print("Gradio not installed. Run `pip install gradio` to launch Web UI.")
