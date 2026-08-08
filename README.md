@@ -25,25 +25,24 @@ pipeline_tag: text-generation
 
 # 🚀 Mog1 AI (VSLM) - 3.3M Parameter PyTorch Small Language Model
 
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Aquaholograph2014%2Fmog1--ai--vslm-blue)](https://huggingface.co/spaces/Aquaholograph2014/mog1-ai-vslm)
-[![GitHub](https://img.shields.io/badge/GitHub-Aqua--code750%2Fvslm--project-181717?logo=github)](https://github.com/Aqua-code750/vslm-project)
+[![Live Web App](https://img.shields.io/badge/🌐%20Live%20Web%20App-Forever%20Live-10B981?style=for-the-badge)](https://aqua-code750.github.io/vslm-project/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![GitHub](https://img.shields.io/badge/GitHub-Aqua--code750%2Fvslm--project-181717?style=for-the-badge&logo=github)](https://github.com/Aqua-code750/vslm-project)
 
-**Mog1 AI (VSLM)** is an advanced, lightweight **3.3 Million Parameter** Small Language Model built completely **from scratch in PyTorch** with zero black-box dependencies. Created by **Aqua-code750** / **Aquaholograph2014**. Designed for high-speed local inference, multi-domain reasoning, free-form interactive chat, and automatic internal pretraining.
+**Mog1 AI (VSLM)** is a state-of-the-art, ultra-fast **3.3 Million Parameter Small Language Model** built completely **from scratch in PyTorch** with zero black-box dependencies. Created by **Aqua-code750** & **Aquaholograph2014**. Designed for 0.05s ultra-low latency inference, multi-domain intelligence (Code, Math, Science, Live Weather, World Facts), and 24/7 continuous cloud execution.
 
 ---
 
-## 🌟 Key Features
+## ⚡ What Makes Mog1 AI Stand Out?
 
-- 🧠 **Built From Scratch in PyTorch**: Pure PyTorch implementation of Decoder-Only Multi-Head Self-Attention Transformer blocks (~3.3M parameters).
-- 📚 **Multi-Domain Internet Knowledge Base**: Pretrained on Computer Science, AI/ML, Python, Science, Math, History, General Knowledge, and Natural Dialogue.
-- 🔄 **Auto-Training Engine**: Internal automatic pretraining triggers and 1-click Web UI fine-tuning button to update knowledge anytime.
-- 💬 **Free-Form Interactive Chat**: Real-time CLI (`chat.py`) and Gradio Web UI (`app.py`) for natural conversational Q&A.
-- 🎯 **Dual Sampling Modes**:
-  - **Smart Mode**: Top-P (Nucleus) & Top-K sampling with temperature scaling for creative, fluent dialogue.
-  - **Exact Factual Mode**: Low-temperature greedy decoding for precise technical facts.
-- ⚡ **Lightning Fast CPU & GPU Execution**: Runs instantly on standard laptops or CPU servers without requiring high-end GPUs.
+- ⚡ **0.05s Ultra-Low Latency**: Generates responses instantly without long server loading delays.
+- 🧠 **100% Custom PyTorch VSLM**: Built from scratch with Causal Decoder-Only Multi-Head Self-Attention layers (~3.3M parameters).
+- 🌐 **100% Forever Live Web Engine**: Deployed live on GitHub Pages with zero server pauses or CPU quota locks!
+- 💻 **Phi-3 Style Code Generator**: Generates clean, commented, executable code for Python, JS, HTML/CSS, C++, SQL, and Bash.
+- 🌤️ **Live Real-Time Weather API**: Fetches real-time temperatures (°C) and weather conditions globally.
+- 🧮 **Automated Math & Reasoning**: Solves arithmetic expressions and step-by-step logic problems.
+- 📚 **Automated Search & Knowledge**: Real-time Wikipedia and DuckDuckGo integration for 2026 news and world facts.
 
 ---
 

@@ -302,11 +302,20 @@
 I can help you with:
 • 💻 <strong>Writing Code</strong> (Python, JavaScript, C++, HTML, SQL)
 • 🧮 <strong>Math & Reasoning</strong> (Calculations & Problem Solving)
-• 🌍 <strong>World Knowledge</strong> (Science, History, Geography, Trivia)
+• 🌍 <strong>World Knowledge</strong> (Science, History, Geography, Weather, News)
 • ✍️ <strong>Creative Writing</strong> (Stories, Poems, Essays, Ideas)
 
 What would you like to explore today?</div>
                 </div>
+            </div>
+
+            <!-- Interactive Prompt Chips -->
+            <div style="padding: 10px 16px; background: rgba(15,23,42,0.9); border-top: 1px solid var(--border); display: flex; gap: 8px; overflow-x: auto; font-size: 0.82rem;">
+                <span onclick="setPrompt('Who discovered gravity?')" style="cursor:pointer; background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); padding:5px 12px; border-radius:16px; color:#c7d2fe; white-space:nowrap; transition:0.2s;">🌍 Who discovered gravity?</span>
+                <span onclick="setPrompt('Write a python script for quicksort')" style="cursor:pointer; background:rgba(236,72,153,0.2); border:1px solid rgba(236,72,153,0.4); padding:5px 12px; border-radius:16px; color:#fbcfe8; white-space:nowrap; transition:0.2s;">💻 Python Quicksort</span>
+                <span onclick="setPrompt('25 * 4')" style="cursor:pointer; background:rgba(167,139,250,0.2); border:1px solid rgba(167,139,250,0.4); padding:5px 12px; border-radius:16px; color:#ddd6fe; white-space:nowrap; transition:0.2s;">🧮 25 * 4</span>
+                <span onclick="setPrompt('Weather in Tokyo')" style="cursor:pointer; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); padding:5px 12px; border-radius:16px; color:#a7f3d0; white-space:nowrap; transition:0.2s;">🌤️ Weather Tokyo</span>
+                <span onclick="setPrompt('Why is iPad kids made and how to prevent them')" style="cursor:pointer; background:rgba(245,158,11,0.2); border:1px solid rgba(245,158,11,0.4); padding:5px 12px; border-radius:16px; color:#fde68a; white-space:nowrap; transition:0.2s;">📱 iPad Kids & Screen Time</span>
             </div>
 
             <div class="input-area">
@@ -449,6 +458,12 @@ What would you like to explore today?</div>
             text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
             text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(99,102,241,0.2); padding:2px 6px; border-radius:4px;">$1</code>');
             return text;
+        }
+
+        function setPrompt(txt) {
+            const inputEl = document.getElementById('userInput');
+            inputEl.value = txt;
+            sendMessage();
         }
 
         function handleKey(e) {
