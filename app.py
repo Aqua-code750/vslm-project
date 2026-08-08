@@ -160,6 +160,10 @@ if __name__ == "__main__":
                 oneshot_btn.click(fn=handle_oneshot_train, outputs=train_status)
                 train_btn.click(fn=handle_auto_train, outputs=train_status)
 
-        demo.launch(share=True, theme=gr.themes.Soft())
+        # Determine port for deployment (Render provides PORT env var)
+        import os
+        port = int(os.getenv("PORT", 7860))
+        # Launch Gradio without share link (Render serves the app directly)
+        demo.launch(server_name="0.0.0.0", server_port=port, share=False, theme=gr.themes.Soft())
     except ImportError:
         print("Gradio not installed. Run `pip install gradio` to launch Web UI.")

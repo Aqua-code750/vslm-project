@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: mog1-ai
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    plan: free
