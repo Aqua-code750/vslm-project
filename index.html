@@ -320,7 +320,8 @@ What would you like to explore today?</div>
             </div>
 
             <div class="input-area">
-                <input type="text" id="userInput" placeholder="Ask Mog1 AI anything or click 🎙️ Voice..." onkeypress="handleKey(event)">
+                <input type="text" id="userInput" placeholder="Ask Mog1 AI anything (X10 Deep Thinking Enabled)..." onkeypress="handleKey(event)">
+                <button class="think-btn" id="thinkBtn" onclick="toggleDeepThink()" title="Toggle X10 Deep Thinking CoT" style="background: linear-gradient(135deg, rgba(168,85,247,0.3), rgba(99,102,241,0.3)); border: 1px solid #a855f7; color: #e9d5ff; padding: 10px 14px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;">🧠 X10 Think</button>
                 <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceRecognition()" title="Speak with Mic" style="background: rgba(99,102,241,0.25); border: 1px solid rgba(99,102,241,0.5); color: #c7d2fe; padding: 10px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;">🎙️ Voice</button>
                 <button class="tts-btn" id="ttsBtn" onclick="toggleTTS()" title="Enable Voice Speech Output" style="background: rgba(16,185,129,0.25); border: 1px solid rgba(16,185,129,0.5); color: #a7f3d0; padding: 10px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;">🔊 Voice: ON</button>
                 <button class="send-btn" onclick="sendMessage()">Send 🚀</button>
@@ -480,10 +481,15 @@ What would you like to explore today?</div>
 
         function formatMarkdown(text) {
             text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, function(match, lang, code) {
-                return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+                return `<pre style="background:#090d16; padding:12px; border-radius:8px; overflow-x:auto; margin:8px 0; border:1px solid rgba(255,255,255,0.1);"><code>${escapeHtml(code.trim())}</code></pre>`;
             });
+            // Blockquotes (X10 Deep Thinking CoT box)
+            text = text.replace(/^>\s*(.+)$/gm, '<blockquote style="border-left:3px solid #a855f7; background:rgba(168,85,247,0.1); padding:8px 12px; margin:8px 0; border-radius:0 8px 8px 0; color:#e9d5ff; font-size:0.92rem;">$1</blockquote>');
+            text = text.replace(/^####\s+(.+)$/gm, '<h4 style="color:#c7d2fe; margin:10px 0 4px 0; font-size:0.98rem;">$1</h4>');
+            text = text.replace(/^###\s+(.+)$/gm, '<h3 style="color:#f8fafc; margin:12px 0 6px 0; font-size:1.15rem;">$1</h3>');
             text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(99,102,241,0.2); padding:2px 6px; border-radius:4px;">$1</code>');
+            text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(99,102,241,0.2); padding:2px 6px; border-radius:4px; font-family:monospace;">$1</code>');
+            text = text.replace(/\n/g, '<br>');
             return text;
         }
 
@@ -543,6 +549,16 @@ What would you like to explore today?</div>
                 vBtn.innerText = "🎙️ Voice";
                 vBtn.style.background = "rgba(99,102,241,0.25)";
             }
+        }
+
+        let deepThinkEnabled = true;
+
+        function toggleDeepThink() {
+            deepThinkEnabled = !deepThinkEnabled;
+            const thinkBtn = document.getElementById('thinkBtn');
+            thinkBtn.innerText = deepThinkEnabled ? "🧠 X10 Think: ON" : "🧠 Think: OFF";
+            thinkBtn.style.background = deepThinkEnabled ? "linear-gradient(135deg, rgba(168,85,247,0.4), rgba(99,102,241,0.4))" : "rgba(255,255,255,0.08)";
+            thinkBtn.style.borderColor = deepThinkEnabled ? "#a855f7" : "var(--border)";
         }
 
         function toggleTTS() {
