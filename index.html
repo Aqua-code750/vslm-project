@@ -319,7 +319,9 @@ What would you like to explore today?</div>
             </div>
 
             <div class="input-area">
-                <input type="text" id="userInput" placeholder="Ask Mog1 AI anything (e.g. who discovered gravity, write python code, math)..." onkeypress="handleKey(event)">
+                <input type="text" id="userInput" placeholder="Ask Mog1 AI anything or click 🎙️ Voice..." onkeypress="handleKey(event)">
+                <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceRecognition()" title="Speak with Mic" style="background: rgba(99,102,241,0.25); border: 1px solid rgba(99,102,241,0.5); color: #c7d2fe; padding: 10px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;">🎙️ Voice</button>
+                <button class="tts-btn" id="ttsBtn" onclick="toggleTTS()" title="Enable Voice Speech Output" style="background: rgba(16,185,129,0.25); border: 1px solid rgba(16,185,129,0.5); color: #a7f3d0; padding: 10px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;">🔊 Voice: ON</button>
                 <button class="send-btn" onclick="sendMessage()">Send 🚀</button>
             </div>
         </div>
@@ -445,6 +447,9 @@ What would you like to explore today?</div>
 
             aiRow.querySelector('.msg-bubble').innerHTML = formatMarkdown(answer);
             chatBox.scrollTop = chatBox.scrollHeight;
+            
+            // Speak response if Text-To-Speech is active
+            speakText(answer);
         }
 
         function escapeHtml(text) {
@@ -468,6 +473,74 @@ What would you like to explore today?</div>
 
         function handleKey(e) {
             if (e.key === 'Enter') sendMessage();
+        }
+
+        // Voice Recognition & Speech Synthesis Implementation
+        let ttsEnabled = true;
+        let recognition = null;
+        let isListening = false;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('userInput').value = transcript;
+                sendMessage();
+            };
+
+            recognition.onend = function() {
+                isListening = false;
+                document.getElementById('voiceBtn').innerText = "🎙️ Voice";
+                document.getElementById('voiceBtn').style.background = "rgba(99,102,241,0.25)";
+            };
+        }
+
+        function toggleVoiceRecognition() {
+            if (!recognition) {
+                alert("Speech Recognition is not supported in this browser. Please try Chrome, Edge, or Safari.");
+                return;
+            }
+            const vBtn = document.getElementById('voiceBtn');
+            if (!isListening) {
+                try {
+                    recognition.start();
+                    isListening = true;
+                    vBtn.innerText = "🔴 Listening...";
+                    vBtn.style.background = "rgba(239, 68, 68, 0.4)";
+                } catch (e) {
+                    console.error(e);
+                }
+            } else {
+                recognition.stop();
+                isListening = false;
+                vBtn.innerText = "🎙️ Voice";
+                vBtn.style.background = "rgba(99,102,241,0.25)";
+            }
+        }
+
+        function toggleTTS() {
+            ttsEnabled = !ttsEnabled;
+            const ttsBtn = document.getElementById('ttsBtn');
+            ttsBtn.innerText = ttsEnabled ? "🔊 Voice: ON" : "🔇 Voice: OFF";
+            ttsBtn.style.background = ttsEnabled ? "rgba(16,185,129,0.25)" : "rgba(148,163,184,0.25)";
+            if (!ttsEnabled && window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        function speakText(text) {
+            if (!ttsEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const cleanText = text.replace(/<[^>]*>/g, '').replace(/[\*\#\`\_]/g, '');
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
         }
     </script>
 
