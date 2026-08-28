@@ -36,13 +36,19 @@ try:
 except Exception:
     HAS_SPEECH = False
 
-# On-Board Offline Knowledge & Intent Weights
+# On-Board Offline Knowledge & Intent Weights (Simple Q&A about Mog1 AI)
 INTENT_WEIGHTS = {
     "hello": "Hello! I am Mog1 AI running offline on your microbit!",
     "hi": "Hi there! I am your microbit AI assistant!",
-    "who": "I am Mog1 AI, a small language model created by Aqua-code750!",
+    "who": "I am Mog1 AI, a 3.3M parameter model created by Aqua-code750 & Aquaholograph2014!",
+    "name": "My name is Mog1 AI (VSLM)! I run on microbit and the web!",
+    "creator": "I was created by Aqua-code750 and Aquaholograph2014!",
+    "created": "Aqua-code750 & Aquaholograph2014 built me using PyTorch and Python!",
+    "maker": "Aqua-code750 and Aquaholograph2014 are my creators!",
+    "size": "I have 3.3 million parameters in PyTorch and a microbit offline mode!",
+    "smart": "I can execute Python code, solve math, fetch weather, and run offline on microbit!",
     "math": "Math Tip: 2 + 2 = 4, 12 * 12 = 144, 25 * 4 = 100!",
-    "python": "Python is a powerful language used for AI and microbit code!",
+    "python": "Python is a powerful language used for AI, PyTorch, and microbit code!",
     "microbit": "BBC microbit v2 has 128KB RAM, 512KB Flash, Mic, and Speaker!",
     "weather": "Current status: Offline Mode active on microbit hardware!",
     "shake": "Sensor Event: Acceleration detected! Microbit motion active!"
