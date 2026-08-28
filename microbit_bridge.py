@@ -58,6 +58,16 @@ def start_microbit_bridge(com_port=None):
                 line = ser.readline().decode('utf-8', errors='ignore').strip()
                 if line.startswith("PROMPT:"):
                     prompt = line.replace("PROMPT:", "").strip()
+                    
+                    # Voice Recognition Triggered by micro:bit Clap / Button B
+                    if prompt == "VOICE_ACTIVATED":
+                        print("\n🎙️ [micro:bit Voice Triggered] Listening to microphone...")
+                        try:
+                            from mog1_voice import listen_microphone
+                            prompt = listen_microphone() or "What can you do?"
+                        except Exception:
+                            prompt = "System info"
+
                     print(f"📥 [micro:bit Prompt]: {prompt}")
                     
                     # Run Mog1 AI Model / Agent
@@ -66,10 +76,12 @@ def start_microbit_bridge(com_port=None):
                     
                     print(f"📤 [Mog1 AI Response]: {clean_res[:100]}...")
                     
-                    # Send response back to micro:bit 5x5 LED matrix
+                    # Send response back to micro:bit 5x5 LED matrix and speaker!
                     ser.write(f"ICON:HAPPY\n".encode('utf-8'))
                     time.sleep(0.2)
-                    ser.write(f"TEXT:{clean_res[:60]}\n".encode('utf-8'))
+                    ser.write(f"SPEAK:{clean_res[:80]}\n".encode('utf-8'))
+                    time.sleep(0.2)
+                    ser.write(f"TEXT:{clean_res[:50]}\n".encode('utf-8'))
 
             time.sleep(0.1)
     except Exception as e:

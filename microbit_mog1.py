@@ -1,11 +1,13 @@
 # ==============================================================================
-# Mog1 AI MicroPython Client for BBC micro:bit (v1 & v2)
+# Mog1 AI MicroPython Client with Voice & Speaker for BBC micro:bit (v1 & v2)
 # ==============================================================================
-# Flash this script to your micro:bit using the online MicroPython editor 
-# (https://python.microbit.org) or Mu Editor.
+# Flash this script to your micro:bit using https://python.microbit.org or Mu Editor.
 #
-# It sends button clicks and sensor data over Serial (USB) to Mog1 AI 
-# and displays smart responses and icons on the 5x5 LED Matrix!
+# Supports:
+# 🎙️ Voice Microphone Activation (Clap / Loud Speech)
+# 🔊 Speaker Speech Audio Output
+# 🕹️ Buttons A & B + Shake Gestures
+# 📺 5x5 LED Matrix Graphics & Text
 # ==============================================================================
 
 from microbit import *
@@ -13,7 +15,7 @@ import time
 
 display.show(Image.HAPPY)
 sleep(1000)
-display.scroll("Mog1 AI")
+display.scroll("Mog1 Voice AI")
 
 # Set up USB Serial baud rate
 uart.init(baudrate=115200)
@@ -31,20 +33,31 @@ def show_ai_icon(icon_name):
         display.show(Image.NO)
     elif icon_name == "HEART":
         display.show(Image.HEART)
+    elif icon_name == "MIC":
+        display.show(Image.MUSIC_QUAVER)
     else:
         display.show(Image.PACMAN)
 
 while True:
-    # Button A: Ask Mog1 AI for a smart quote / status
+    # 🎙️ Voice Microphone Activation (Clap / Loud Speech on micro:bit v2)
+    try:
+        if microphone.was_event(SoundEvent.LOUD):
+            show_ai_icon("MIC")
+            uart.write("PROMPT:VOICE_ACTIVATED\n")
+            sleep(500)
+    except Exception:
+        pass
+
+    # Button A: Ask Mog1 AI for a smart motivation quote
     if button_a.was_pressed():
         display.show(Image.ARROW_W)
         uart.write("PROMPT:Give a 1-sentence motivation quote for microbit\n")
         sleep(500)
 
-    # Button B: Request current weather / system info
+    # Button B: Voice Recognition trigger or system info
     if button_b.was_pressed():
-        display.show(Image.ARROW_E)
-        uart.write("PROMPT:system info\n")
+        show_ai_icon("MIC")
+        uart.write("PROMPT:VOICE_ACTIVATED\n")
         sleep(500)
 
     # Shake: Trigger AI gesture event
@@ -60,6 +73,14 @@ while True:
             msg = line.decode('utf-8').strip()
             if msg.startswith("ICON:"):
                 show_ai_icon(msg.split(":")[1].strip())
+            elif msg.startswith("SPEAK:"):
+                speech_text = msg.split("SPEAK:")[1].strip()
+                # Try micro:bit v2 built-in speaker speech synthesizer
+                try:
+                    import speech
+                    speech.say(speech_text)
+                except Exception:
+                    display.scroll(speech_text)
             elif msg.startswith("TEXT:"):
                 display.scroll(msg.split("TEXT:")[1].strip())
             else:
