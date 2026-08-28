@@ -308,7 +308,17 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
         if world_knowledge:
             return world_knowledge
 
-    # 3. Generate from PyTorch Neural Network with Full Multi-Turn Context
+    # 3. Autonomous Mog1Agent Execution Engine (Tool Calling & Autonomous Routing)
+    try:
+        from mog1_agent import Mog1Agent
+        global_agent = Mog1Agent()
+        agent_res = global_agent.run(search_query)
+        if agent_res and not agent_res.startswith("🤖"):
+            return agent_res
+    except Exception:
+        pass
+
+    # 4. Generate from PyTorch Neural Network with Full Multi-Turn Context
     if past_context:
         formatted = f"{past_context}\nUser: {message.strip()}\nMog1:"
     else:
