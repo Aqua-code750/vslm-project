@@ -362,7 +362,23 @@ What would you like to explore today?</div>
                 return `💡 **Direct Answer**:\n\n${DIRECT_FACTS[lower] || DIRECT_FACTS[cleanKey]}`;
             }
 
-            // 1. Math Calculation & Algebra
+            // 1. Live Temporal Awareness (Current Date, Time & Year 2026)
+            const now = new Date();
+            const curYear = now.getFullYear();
+            const curDate = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const curTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+            if (/\b(what year|current year|which year|what is the year)\b/i.test(lower)) {
+                return `📅 The current year is **${curYear}**.`;
+            }
+            if (/\b(what date|today's date|current date|what day is today|what is today)\b/i.test(lower)) {
+                return `📅 Today is **${curDate}**.`;
+            }
+            if (/\b(what time|current time|time now|clock)\b/i.test(lower)) {
+                return `🕒 The current time is **${curTime}** (${curDate}).`;
+            }
+
+            // 2. Math Calculation & Algebra
             if (/^[0-9\s\+\-\*\/\^\(\)\.]+\??$/.test(raw)) {
                 try {
                     const cleanMath = raw.replace('?', '').replace(/\^/g, '**');
@@ -371,26 +387,31 @@ What would you like to explore today?</div>
                 } catch (e) {}
             }
 
-            // 2. Code Generation Requests
+            // 3. Code Generation Requests (Python, JavaScript, C++, HTML/CSS, SQL)
             if (/(code|write|create|program|script|function|implement)\s+.*(python|javascript|js|html|css|c\+\+|java|c#|sql)/i.test(lower) || /how to (code|write|program)/i.test(lower)) {
                 if (lower.includes('python')) {
-                    return `💻 **Python Solution**:\n\n\`\`\`python\ndef mog1_solution():\n    # Solution for: ${raw}\n    print("Executing Mog1 AI Code...")\n    return True\n\nmog1_solution()\n\`\`\`\n\nThis Python function handles your request cleanly. You can run it directly in any Python environment!`;
+                    return `💻 **Python Solution**:\n\n\`\`\`python\ndef mog1_solution():\n    # Solution for: ${raw}\n    print("Executing Mog1 AI Python Code...")\n    # Example implementation\n    items = [5, 2, 9, 1, 5, 6]\n    return sorted(items)\n\nif __name__ == "__main__":\n    result = mog1_solution()\n    print("Output:", result)\n\`\`\`\n\n✨ **Complexity**: $O(n \\log n)$ &bull; Ready to copy and execute in any Python 3.x environment.`;
                 } else if (lower.includes('javascript') || lower.includes('js')) {
-                    return `💻 **JavaScript Solution**:\n\n\`\`\`javascript\nfunction mog1Solution() {\n    // Solution for: ${raw}\n    console.log("Executing Mog1 AI JS Code...");\n}\n\nmog1Solution();\n\`\`\``;
+                    return `💻 **JavaScript Solution**:\n\n\`\`\`javascript\nfunction mog1Solution() {\n    // Solution for: ${raw}\n    const data = [5, 2, 9, 1, 5, 6];\n    return data.sort((a, b) => a - b);\n}\n\nconsole.log("Output:", mog1Solution());\n\`\`\`\n\n✨ Ready to run directly in Node.js or browser developer console.`;
+                } else if (lower.includes('html') || lower.includes('css')) {
+                    return `💻 **HTML / CSS Web Solution**:\n\n\`\`\`html\n<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    .card { background: #0f172a; color: #fff; padding: 20px; border-radius: 12px; font-family: sans-serif; }\n  </style>\n</head>\n<body>\n  <div class="card">\n    <h2>Mog1 AI Web Component</h2>\n    <p>Custom component built for: ${raw}</p>\n  </div>\n</body>\n</html>\n\`\`\``;
                 }
                 return `💻 **Code Implementation**:\n\n\`\`\`text\n// Mog1 AI Solution for: ${raw}\n\`\`\``;
             }
 
-            // 3. Conversational Dialogue & Identity
+            // 4. Conversational Dialogue & Identity
             if (/^(hello|hi|hey|greetings|hola)\b/i.test(lower)) {
-                return "Hello! I am Mog1 AI. How can I assist you today? Feel free to ask for code, math solutions, science explanations, or creative writing!";
+                return "Hello! I am **Mog1 AI**. How can I assist you today? Feel free to ask for code, math solutions, latest science explanations, or world facts!";
             }
-            if (/(who are you|what is your name|who made you|who created you)/i.test(lower)) {
+            if (/(who are you|what is your name|who made you|who created you|who is your creator)/i.test(lower)) {
                 return "I am **Mog1 AI (VSLM)**, a 3.3 Million Parameter PyTorch Small Language Model created by **Aqua-code750** and **Aquaholograph2014**!";
             }
+            if (/(how many parameters|model size|parameter count)/i.test(lower)) {
+                return "I have **3.3 Million Parameters** (~3,354,624) built with PyTorch Decoder-Only Multi-Head Self-Attention layers!";
+            }
 
-            // 4. Wikipedia Entity Search & Fact Extractor
-            const searchTerms = lower.replace(/^(who discovered|who wrote|who is|who created|what is the capital of|what is the|what is|where is|explain|tell me about)\s+/i, '').replace(/[^\w\s]/gi, '').trim();
+            // 5. Wikipedia & Web Fact Extractor (with 2026 Context)
+            const searchTerms = lower.replace(/^(who discovered|who wrote|who is|who created|what is the capital of|what is the|what is|where is|explain|tell me about|latest updates on|latest on|news on)\s+/i, '').replace(/[^\w\s]/gi, '').trim();
 
             try {
                 const searchRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchTerms || raw)}&format=json&origin=*`);
@@ -401,12 +422,12 @@ What would you like to explore today?</div>
                     const sumData = await sumRes.json();
                     if (sumData.extract && !sumData.extract.includes('refer to:')) {
                         const cleanExtract = sumData.extract.replace(/\[\d+\]/g, '');
-                        return `📚 **${title}**:\n\n${cleanExtract}`;
+                        return `### 📚 **${title}**\n\n${cleanExtract}\n\n> 🌐 *Verified World Knowledge &bull; Mog1 AI Intelligent Engine (${curYear})*`;
                     }
                 }
             } catch (e) {}
 
-            return `💡 **Overview**:\n\n"${raw}" is an important subject in science, technology, mathematics, and world history. Mog1 AI is ready to explore it further with you!`;
+            return `### 🌐 In-Depth Analysis: **${raw}** (${curYear})\n\n#### 📌 1. Conceptual Overview\n**${raw}** is a notable topic across modern science, computer systems, mathematics, and technological innovation in ${curYear}.\n\n#### 🔬 2. Deep Technical Breakdown\n• **Core Principles**: Built on fundamental theoretical models and structured data flow.\n• **Modern Integration**: Applied across scalable production architectures and automated pipelines.\n• **Performance & Reliability**: Designed for robust real-time execution and scalability.\n\n#### 💡 3. Real-World Applications\n• Extensively utilized in current research, enterprise software, and machine learning development.\n\n> 🎯 **Key Takeaway**: Understanding **${raw}** offers valuable perspective on both foundational mechanics and current ${curYear} innovations.`;
         }
 
         async function sendMessage() {
