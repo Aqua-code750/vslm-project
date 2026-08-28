@@ -69,7 +69,56 @@ def fetch_universal_world_knowledge(query: str) -> str:
             except Exception:
                 pass
 
-    # 3. Temporal Awareness: Real-Time Date & Current Year (2026)
+    # 3. Casual & Friendly Conversational Persona Engine
+    import random
+    clean_casual = re.sub(r'[^\w\s]', '', lower_q).strip()
+
+    if clean_casual in ["hey", "hi", "hello", "yo", "sup", "wsp", "whats up", "what up", "hey bro", "yo bro", "hi there"]:
+        greetings = [
+            "Hey! What's going on? How can I help you today? 😊",
+            "Yo! What's up? Ready to chat, code, or solve whatever is on your mind! 🚀",
+            "Hey there! Great to see you. What are we working on today?",
+            "Wassup! I'm here and ready. What's on your mind?"
+        ]
+        return random.choice(greetings)
+
+    if any(k in lower_q for k in ["how are you", "how r u", "how you doing", "hows your day", "how is your day", "hows it going", "hru"]):
+        return "I'm doing great, thanks for asking! 😄 Feeling fast and ready to help. How about you? How has your day been?"
+
+    if any(k in lower_q for k in ["what are you doing", "what r u doing", "wyd", "what you up to"]):
+        return "Just chilling in the cloud, processing tokens and hanging out with you! What are you up to right now? 😎"
+
+    if any(k in lower_q for k in ["tell me a joke", "make me laugh", "say a joke", "tell a joke"]):
+        jokes = [
+            "Why do programmers prefer dark mode? Because light attracts bugs! 🐛😂",
+            "Why did the neural network go to school? To improve its feature extraction! 🧠",
+            "There are only 10 types of people in the world: those who understand binary, and those who don't. 💻",
+            "Why was the JavaScript developer sad? Because they didn't Node how to Express themselves! ☕"
+        ]
+        return f"😄 Here's one for you:\n\n**{random.choice(jokes)}**"
+
+    if any(k in lower_q for k in ["im bored", "i am bored", "bored", "what should i do"]):
+        return (
+            "Boredom detected! Let's fix that! 🎮 Here are a few fun things we could do:\n\n"
+            "1. 🧠 **Trivia Challenge**: Ask me to quiz you on science, video games, or coding!\n"
+            "2. 💻 **Build Something Cool**: We can make a mini Python game or a web app!\n"
+            "3. 🤖 **micro:bit Experiment**: Let's write a MicroPython script with sound and animations!\n"
+            "4. 💬 **Just Chill & Chat**: Tell me what you're interested in lately!"
+        )
+
+    if clean_casual in ["lol", "lmao", "haha", "hahaha", "xd", "rofl"]:
+        return "Haha glad I could make you smile! What else is on your mind? 😄"
+
+    if any(k in lower_q for k in ["good morning", "gm"]):
+        return "Good morning! ☀️ Hope you have an awesome and productive day today. What's on the agenda?"
+
+    if any(k in lower_q for k in ["good night", "gn", "sweet dreams"]):
+        return "Good night! 🌙 Get some great rest, and see you next time you want to build or chat!"
+
+    if any(k in lower_q for k in ["you are cool", "youre cool", "you are awesome", "you rock", "i love you", "nice one", "good job", "thanks bro"]):
+        return "Appreciate it so much! You're awesome too! Let's keep cooking! 🔥🚀"
+
+    # 4. Temporal Awareness: Real-Time Date & Current Year (2026)
     from datetime import datetime
     now_dt = datetime.now()
     cur_year = now_dt.year

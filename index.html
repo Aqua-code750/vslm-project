@@ -400,10 +400,57 @@ What would you like to explore today?</div>
                 return `💻 **Code Implementation**:\n\n\`\`\`text\n// Mog1 AI Solution for: ${raw}\n\`\`\``;
             }
 
-            // 4. Conversational Dialogue & Identity
-            if (/^(hello|hi|hey|greetings|hola)\b/i.test(lower)) {
-                return "Hello! I am **Mog1 AI**. How can I assist you today? Feel free to ask for code, math solutions, latest science explanations, or world facts!";
+            // 4. Casual & Friendly Conversational Dialogue Engine
+            const cleanCasual = lower.replace(/[^\w\s]/g, '').trim();
+
+            if (["hey", "hi", "hello", "yo", "sup", "wsp", "whats up", "what up", "hey bro", "yo bro", "hi there"].includes(cleanCasual)) {
+                const greetings = [
+                    "Hey! What's going on? How can I help you today? 😊",
+                    "Yo! What's up? Ready to chat, code, or solve whatever is on your mind! 🚀",
+                    "Hey there! Great to see you. What are we working on today?",
+                    "Wassup! I'm here and ready. What's on your mind?"
+                ];
+                return greetings[Math.floor(Math.random() * greetings.length)];
             }
+
+            if (/\b(how are you|how r u|how you doing|hows your day|how is your day|hows it going|hru)\b/i.test(lower)) {
+                return "I'm doing great, thanks for asking! 😄 Feeling fast and ready to help. How about you? How has your day been?";
+            }
+
+            if (/\b(what are you doing|what r u doing|wyd|what you up to)\b/i.test(lower)) {
+                return "Just chilling in the cloud, processing tokens and hanging out with you! What are you up to right now? 😎";
+            }
+
+            if (/\b(tell me a joke|make me laugh|say a joke|tell a joke)\b/i.test(lower)) {
+                const jokes = [
+                    "Why do programmers prefer dark mode? Because light attracts bugs! 🐛😂",
+                    "Why did the neural network go to school? To improve its feature extraction! 🧠",
+                    "There are only 10 types of people in the world: those who understand binary, and those who don't. 💻",
+                    "Why was the JavaScript developer sad? Because they didn't Node how to Express themselves! ☕"
+                ];
+                return `😄 Here's one for you:\n\n**${jokes[Math.floor(Math.random() * jokes.length)]}**`;
+            }
+
+            if (/\b(im bored|i am bored|bored|what should i do)\b/i.test(lower)) {
+                return "Boredom detected! Let's fix that! 🎮 Here are a few fun things we could do:\n\n1. 🧠 **Trivia Challenge**: Ask me to quiz you on science, video games, or coding!\n2. 💻 **Build Something Cool**: We can make a mini Python game or a web app!\n3. 🤖 **micro:bit Experiment**: Let's write a MicroPython script with sound and animations!\n4. 💬 **Just Chill & Chat**: Tell me what you're interested in lately!";
+            }
+
+            if (["lol", "lmao", "haha", "hahaha", "xd", "rofl"].includes(cleanCasual)) {
+                return "Haha glad I could make you smile! What else is on your mind? 😄";
+            }
+
+            if (/\b(good morning|gm)\b/i.test(lower)) {
+                return "Good morning! ☀️ Hope you have an awesome and productive day today. What's on the agenda?";
+            }
+
+            if (/\b(good night|gn|sweet dreams)\b/i.test(lower)) {
+                return "Good night! 🌙 Get some great rest, and see you next time you want to build or chat!";
+            }
+
+            if (/\b(you are cool|youre cool|you are awesome|you rock|i love you|nice one|good job|thanks bro)\b/i.test(lower)) {
+                return "Appreciate it so much! You're awesome too! Let's keep cooking! 🔥🚀";
+            }
+
             if (/(who are you|what is your name|who made you|who created you|who is your creator)/i.test(lower)) {
                 return "I am **Mog1 AI (VSLM)**, a 3.3 Million Parameter PyTorch Small Language Model created by **Aqua-code750** and **Aquaholograph2014**!";
             }
