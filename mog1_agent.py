@@ -138,28 +138,21 @@ class Mog1Agent:
             executed_tools.append("web_search")
             observations.append(search_res)
 
-        # 5. Synthesis: 192 IQ Genius-Level Intelligence Formatting
+        # 5. Synthesis: SmolLM-Style Friendly & Clean Medium-Level Intelligence
         if observations:
-            tool_str = ", ".join([f"`{t}`" for t in executed_tools])
             obs_str = "\n".join(observations)
-            final_res = (
-                f"🧠 **192 IQ Genius Reasoning Engine** (Autonomous Action: Used {tool_str}):\n\n"
-                f"🎯 **Core Solution & Insight**:\n"
-                f"{obs_str}\n\n"
-                f"💡 **Strategic Genius Takeaway**:\n"
-                f"Mog1 AI autonomously verified this query using real-time computation and factual tool execution."
-            )
+            final_res = f"{obs_str}"
         else:
             if any(g in p_lower for g in ["hello", "hi", "hey", "greetings", "how are you"]):
-                final_res = "Hello! I am **Mog1 AI**, your 192 IQ PyTorch AI assistant. I autonomously solve math, write code, run Python, fetch real-time knowledge, and reason deeply about complex topics!"
+                final_res = "Hello! I am **Mog1 AI**, a lightweight Small Language Model (VSLM). How can I help you today? Feel free to ask questions, solve math, or write code!"
             elif any(i in p_lower for i in ["who are you", "what are you", "who made you"]):
-                final_res = "I am **Mog1 AI (VSLM)**, a 3.3 Million Parameter PyTorch Small Language Model trained from scratch and equipped with a 192 IQ autonomous multi-tool reasoning engine!"
+                final_res = "I am **Mog1 AI (VSLM)**, a 3.3 Million Parameter PyTorch Small Language Model created by **Aqua-code750** and **Aquaholograph2014**!"
             else:
                 final_res = (
-                    f"🧠 **192 IQ Genius Analysis for '{p_raw}'**:\n\n"
-                    f"1. **Core Principle**: '{p_raw}' is an important subject in technology, science, mathematics, and world knowledge.\n"
-                    f"2. **Deep Technical Context**: It involves fundamental principles, structural mechanics, and practical applications.\n"
-                    f"3. **Strategic Insight**: Mog1 AI is configured to analyze, reason, execute code, and synthesize top-tier insights on this topic."
+                    f"Here is a summary of **{p_raw}**:\n\n"
+                    f"• **Overview**: '{p_raw}' is an important concept in technology, science, and world knowledge.\n"
+                    f"• **Details**: It connects to fundamental principles and everyday practical applications.\n"
+                    f"• **Learn More**: Let me know if you'd like code examples, math breakdowns, or further details on this topic!"
                 )
 
         self.conversation_memory.append({"role": "assistant", "content": final_res})
