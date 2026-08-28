@@ -31,15 +31,21 @@ def _run_training(epochs: int = 30, is_oneshot: bool = False):
         with _auto_train_lock:
             _is_training = False
 
-def trigger_auto_train(epochs: int = 30, is_oneshot: bool = False):
+def trigger_auto_train(epochs: int = 60, is_oneshot: bool = False, is_claude_level: bool = False):
     global _auto_train_thread, _is_training
     with _auto_train_lock:
         if _is_training:
             return False, "Training is already in progress."
 
-    _auto_train_thread = threading.Thread(target=_run_training, args=(epochs, is_oneshot), daemon=True)
+    actual_epochs = 60 if is_claude_level else epochs
+    _auto_train_thread = threading.Thread(target=_run_training, args=(actual_epochs, is_oneshot), daemon=True)
     _auto_train_thread.start()
-    mode_str = "1-Shot Instant Pretraining" if is_oneshot else "Background Auto-Pretraining"
+    if is_oneshot:
+        mode_str = "1-Shot Instant Pretraining"
+    elif is_claude_level:
+        mode_str = "🧠 Claude-Level Deep Training (60 Epochs, Cosine Annealing)"
+    else:
+        mode_str = f"Auto-Pretraining ({epochs} Epochs)"
     return True, f"Started {mode_str}!"
 
 def is_auto_training() -> bool:

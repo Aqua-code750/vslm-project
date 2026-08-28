@@ -411,6 +411,12 @@ def handle_auto_train():
     success, msg = trigger_auto_train(epochs=30)
     return f"{msg} (Model will reload upon completion)."
 
+def handle_claude_train():
+    if is_auto_training():
+        return "Training is already running in background!"
+    success, msg = trigger_auto_train(is_claude_level=True)
+    return f"{msg} (Optimizing weights with Cosine Annealing & AdamW)."
+
 if __name__ == "__main__":
     try:
         import gradio as gr
@@ -419,7 +425,7 @@ if __name__ == "__main__":
             gr.Markdown(
                 """
                 # ⚡ Mog1 AI (VSLM) - Instant 1-Shot Pretrain Engine
-                **Mog1** features an instant 1-Shot Pretraining Engine that learns new datasets in **less than 1.5 seconds**!
+                **Mog1** features an instant 1-Shot Pretraining Engine and Claude-Level Deep Training that learns new datasets!
                 """
             )
             with gr.Tab("Interactive Chat"):
@@ -470,12 +476,14 @@ if __name__ == "__main__":
 
             with gr.Tab("Instant 1-Shot Pretrain & Management"):
                 gr.Markdown("### ⚡ Instant 1-Shot Pretraining Engine")
-                gr.Markdown("Click **1-Shot Instant Pretrain** to train or fine-tune Mog1 AI on the latest knowledge base in **1 SECOND**!")
+                gr.Markdown("Click **1-Shot Instant Pretrain** or **Claude-Level Deep Train** to train or fine-tune Mog1 AI on the latest knowledge base!")
                 with gr.Row():
                     oneshot_btn = gr.Button("⚡ 1-Shot Instant Pretrain (1 Sec)", variant="primary")
+                    claude_btn = gr.Button("🧠 Claude-Level Deep Train (60 Epochs)", variant="primary")
                     train_btn = gr.Button("🔄 Standard Auto-Pretrain (30 Epochs)", variant="secondary")
                 train_status = gr.Textbox(label="Pretrain Engine Status", interactive=False)
                 oneshot_btn.click(fn=handle_oneshot_train, outputs=train_status)
+                claude_btn.click(fn=handle_claude_train, outputs=train_status)
                 train_btn.click(fn=handle_auto_train, outputs=train_status)
 
         # Determine port for deployment (Render provides PORT env var)
