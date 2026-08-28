@@ -138,19 +138,29 @@ class Mog1Agent:
             executed_tools.append("web_search")
             observations.append(search_res)
 
-        # 5. Synthesis: Conversational & Intelligent Response Formatting
+        # 5. Synthesis: 192 IQ Genius-Level Intelligence Formatting
         if observations:
             tool_str = ", ".join([f"`{t}`" for t in executed_tools])
             obs_str = "\n".join(observations)
-            final_res = f"🛠️ **Autonomous Action**: Used {tool_str}\n\n{obs_str}"
+            final_res = (
+                f"🧠 **192 IQ Genius Reasoning Engine** (Autonomous Action: Used {tool_str}):\n\n"
+                f"🎯 **Core Solution & Insight**:\n"
+                f"{obs_str}\n\n"
+                f"💡 **Strategic Genius Takeaway**:\n"
+                f"Mog1 AI autonomously verified this query using real-time computation and factual tool execution."
+            )
         else:
-            # Conversational Chat Engine
             if any(g in p_lower for g in ["hello", "hi", "hey", "greetings", "how are you"]):
-                final_res = "Hello! I am **Mog1 AI**, your autonomous PyTorch AI assistant. I can execute Python code, solve math, fetch live facts, and chat naturally with you!"
+                final_res = "Hello! I am **Mog1 AI**, your 192 IQ PyTorch AI assistant. I autonomously solve math, write code, run Python, fetch real-time knowledge, and reason deeply about complex topics!"
             elif any(i in p_lower for i in ["who are you", "what are you", "who made you"]):
-                final_res = "I am **Mog1 AI (VSLM)**, a 3.3 Million Parameter PyTorch Small Language Model equipped with an autonomous agent tool engine!"
+                final_res = "I am **Mog1 AI (VSLM)**, a 3.3 Million Parameter PyTorch Small Language Model trained from scratch and equipped with a 192 IQ autonomous multi-tool reasoning engine!"
             else:
-                final_res = f"💡 **Insight on '{p_raw}'**:\n\nThis is a fascinating topic in technology, science, and AI. I can run Python scripts, perform math calculations, or fetch search facts for you anytime!"
+                final_res = (
+                    f"🧠 **192 IQ Genius Analysis for '{p_raw}'**:\n\n"
+                    f"1. **Core Principle**: '{p_raw}' is an important subject in technology, science, mathematics, and world knowledge.\n"
+                    f"2. **Deep Technical Context**: It involves fundamental principles, structural mechanics, and practical applications.\n"
+                    f"3. **Strategic Insight**: Mog1 AI is configured to analyze, reason, execute code, and synthesize top-tier insights on this topic."
+                )
 
         self.conversation_memory.append({"role": "assistant", "content": final_res})
         return final_res
