@@ -286,8 +286,14 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
     if (lower_msg in greetings or any(lower_msg.startswith(g + " ") for g in greetings) or lower_msg == "how are you") and not past_context:
         return "Hello! I am **Mog1 AI**, your PyTorch Small Language Model assistant. How can I help you today? Feel free to ask for code, math solutions, science explanations, or world facts!"
 
-    if any(q in lower_msg for q in ["who are you", "what is your name", "who created you", "who made you"]) and not past_context:
+    if any(q in lower_msg for q in ["who are you", "what is your name", "who created you", "who made you", "who is your creator", "who built you"]):
         return "I am **Mog1 AI (VSLM)**, a 3.3 Million Parameter PyTorch Small Language Model created by **Aqua-code750** & **Aquaholograph2014**!"
+
+    if any(q in lower_msg for q in ["how many parameters", "model size", "parameter count"]):
+        return "I have **3.3 Million Parameters** (~3,354,624) built with PyTorch Decoder-Only Multi-Head Self-Attention layers!"
+
+    if any(q in lower_msg for q in ["what can you do", "your features", "your capabilities"]):
+        return "I can write code (Python, JS, HTML, C++, SQL), solve math, fetch real-time weather & web search facts, execute autonomous tools, and run on BBC micro:bit hardware!"
 
     # Detect follow-up intent (e.g. "tell me more", "explain step 1", "what about", "why is that")
     followup_keywords = ["step", "more", "details", "explain that", "what about", "further", "elaborate", "why", "how so"]
