@@ -45,6 +45,7 @@ pipeline_tag: text-generation
 - 🛠️ **Autonomous Agent & Tool Execution Framework**: Includes `mog1_agent.py` SDK allowing developers to equip Mog1 AI with custom python tools (`calculator`, `python_interpreter`, `web_search`, `system_info`).
 - 🤖 **BBC micro:bit AI Hardware Compatibility**: Includes `microbit_mog1.py` MicroPython client & `microbit_bridge.py` USB/Serial bridge to power physical micro:bit microcontrollers with Mog1 AI!
 - 🎙️ **Voice Recognition & Text-To-Speech Engine**: Web Speech API integration in `index.html` + `mog1_voice.py` desktop voice assistant!
+- 🔑 **Developer API Portal & Key Gateway**: Generate `mog1_live_sk_...` API keys via `api_portal.html` and integrate Mog1 AI into external Python, JS, and hardware apps!
 
 ---
 

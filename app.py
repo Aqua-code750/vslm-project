@@ -417,6 +417,25 @@ if __name__ == "__main__":
                     
                 agent_btn.click(fn=run_agent_wrapper, inputs=agent_input, outputs=agent_output)
 
+            with gr.Tab("🔑 Developer API Keys"):
+                gr.Markdown("### 🔑 Mog1 AI Developer API Key Gateway")
+                gr.Markdown("Generate secure API keys to integrate Mog1 AI into your Python scripts, web apps, Discord bots, and micro:bit hardware projects!")
+                from api_manager import generate_api_key, list_api_keys
+                
+                with gr.Row():
+                    key_name_input = gr.Textbox(label="App / Project Name", placeholder="e.g. My Discord Bot, Web App, micro:bit...")
+                    key_env_radio = gr.Radio(["Production (mog1_live_sk_...)", "Development (mog1_test_sk_...)"], label="Environment", value="Production (mog1_live_sk_...)")
+                
+                create_key_btn = gr.Button("✨ Generate New API Key", variant="primary")
+                key_output_md = gr.Markdown(label="Generated Key")
+                
+                def handle_create_key(name, env_choice):
+                    env = "live" if "Production" in env_choice else "test"
+                    key_data = generate_api_key(name, env)
+                    return f"### 🎉 Successfully Generated API Key:\n\n`{key_data['key']}`\n\n• **Name**: {key_data['name']}\n• **Status**: Active (120 req/min)\n• **Created**: {key_data['created_at']}\n\n*Copy and keep this key safe in your `.env` or application code!*"
+
+                create_key_btn.click(fn=handle_create_key, inputs=[key_name_input, key_env_radio], outputs=key_output_md)
+
             with gr.Tab("Instant 1-Shot Pretrain & Management"):
                 gr.Markdown("### ⚡ Instant 1-Shot Pretraining Engine")
                 gr.Markdown("Click **1-Shot Instant Pretrain** to train or fine-tune Mog1 AI on the latest knowledge base in **1 SECOND**!")
