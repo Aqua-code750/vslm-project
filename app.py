@@ -56,7 +56,7 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
         return ""
 
     messages = [
-        {"role": "system", "content": "You are Mog1 AI, a helpful, coherent, and precise conversational language model."}
+        {"role": "system", "content": "You are Mog1 AI, a helpful, coherent, and precise conversational AI assistant."}
     ]
 
     # Format multi-turn conversation history
@@ -76,14 +76,17 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
 
     # Configure sampling parameters
     if "Creative" in mode:
-        temp = max(temperature, 0.75)
-        tp = 0.95
+        temp = max(temperature, 0.4)
+        tp = 0.90
+        tk = max(top_k, 5)
     elif "Factual" in mode:
-        temp = 0.2
-        tp = 0.7
-    else:
-        temp = temperature
-        tp = top_p
+        temp = 0.0
+        tp = 1.0
+        tk = 1
+    else:  # Smart Reasoning Mode (Default)
+        temp = 0.0
+        tp = 1.0
+        tk = 1
 
     with torch.no_grad():
         output_ids = model.generate(

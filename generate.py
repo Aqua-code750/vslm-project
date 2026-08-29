@@ -84,9 +84,9 @@ def generate_text(
     if mode == "exact":
         temp, tk, tp = 0.0, 1, 1.0
     elif mode == "smart":
-        temp, tk, tp = 0.1, 3, 0.80
+        temp, tk, tp = 0.0, 1, 1.0
     else:  # "free"
-        temp, tk, tp = max(temperature, 0.25), min(top_k, 8), top_p
+        temp, tk, tp = max(temperature, 0.3), min(top_k, 5), top_p
 
     with torch.no_grad():
         output_ids = model.generate(
