@@ -1,3 +1,5 @@
 *.pt
+!vslm_checkpoint.pt
+!vslm_checkpoint_best.pt
 __pycache__/
 .gradio/

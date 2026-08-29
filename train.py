@@ -169,11 +169,26 @@ def train_instruction_model(
             val_loss, val_ppl = evaluate_loss(model, val_loader, device)
             print(f"Epoch {epoch:02d}/{epochs} | Train Loss: {avg_train_loss:.4f} | Val Loss: {val_loss:.4f} | Val PPL: {val_ppl:.2f} | LR: {lr:.6f}", flush=True)
 
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                best_checkpoint = {
+                    "model_state_dict": model.state_dict(),
+                    "config": config,
+                    "stoi": tokenizer.stoi,
+                    "itos": tokenizer.itos,
+                    "train_loss": avg_train_loss,
+                    "val_loss": val_loss,
+                    "val_ppl": val_ppl,
+                    "epoch": epoch,
+                    "is_best": True,
+                    "timestamp": time.time()
+                }
+                torch.save(best_checkpoint, "vslm_checkpoint_best.pt")
+                torch.save(best_checkpoint, save_path)
+                print(f"  ⭐ Saved new BEST checkpoint (Val Loss: {best_val_loss:.4f}, PPL: {val_ppl:.2f}) -> 'vslm_checkpoint_best.pt'", flush=True)
 
-        # Save current checkpoint
-        checkpoint = {
+        # Save latest checkpoint
+        latest_checkpoint = {
             "model_state_dict": model.state_dict(),
             "config": config,
             "stoi": tokenizer.stoi,
@@ -182,9 +197,10 @@ def train_instruction_model(
             "val_loss": val_loss,
             "val_ppl": val_ppl,
             "epoch": epoch,
+            "is_best": False,
             "timestamp": time.time()
         }
-        torch.save(checkpoint, save_path)
+        torch.save(latest_checkpoint, "vslm_checkpoint_latest.pt")
 
     elapsed = time.time() - start_time
     print(f"\n✅ Training Complete in {elapsed:.2f}s! Best Validation Loss: {best_val_loss:.4f}", flush=True)

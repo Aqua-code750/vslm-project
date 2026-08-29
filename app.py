@@ -12,17 +12,23 @@ from auto_train import trigger_auto_train, is_auto_training
 
 # Set encoding for Windows terminal
 if hasattr(sys.stdout, 'reconfigure'):
-    sys.stdout.reconfigure(encoding='utf-8')
-
-CHECKPOINT_PATH = "vslm_checkpoint.pt"
+BEST_CHECKPOINT_PATH = "vslm_checkpoint_best.pt"
+DEFAULT_CHECKPOINT_PATH = "vslm_checkpoint.pt"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-def load_or_train_model():
-    if not os.path.exists(CHECKPOINT_PATH):
-        print("Pretraining Mog1 AI Model on startup...", flush=True)
-        train_instruction_model(epochs=35, save_path=CHECKPOINT_PATH)
+def get_best_checkpoint_path() -> str:
+    if os.path.exists(BEST_CHECKPOINT_PATH):
+        return BEST_CHECKPOINT_PATH
+    return DEFAULT_CHECKPOINT_PATH
 
-    checkpoint = torch.load(CHECKPOINT_PATH, map_location=DEVICE, weights_only=False)
+def load_or_train_model():
+    ckpt_path = get_best_checkpoint_path()
+    if not os.path.exists(ckpt_path):
+        print("Pretraining Mog1 AI Model on startup...", flush=True)
+        train_instruction_model(epochs=35, save_path=DEFAULT_CHECKPOINT_PATH)
+        ckpt_path = get_best_checkpoint_path()
+
+    checkpoint = torch.load(ckpt_path, map_location=DEVICE, weights_only=False)
     config = checkpoint['config']
 
     tokenizer = SubwordTokenizer(
@@ -33,7 +39,9 @@ def load_or_train_model():
     model = Mog1(config).to(DEVICE)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
-    print(f"Loaded Mog1 Neural Model ({model.get_num_params():,} parameters) on {DEVICE}.", flush=True)
+    val_loss = checkpoint.get('val_loss', 'N/A')
+    val_ppl = checkpoint.get('val_ppl', 'N/A')
+    print(f"⭐ Loaded BEST Mog1 Checkpoint '{ckpt_path}' ({model.get_num_params():,} params, Val Loss: {val_loss}, Val PPL: {val_ppl}) on {DEVICE}.", flush=True)
     return model, tokenizer
 
 model, tokenizer = load_or_train_model()

@@ -50,7 +50,10 @@ BENCHMARK_TASKS = [
     }
 ]
 
-def load_eval_model(checkpoint_path: str = "vslm_checkpoint.pt"):
+def load_eval_model(checkpoint_path: str = None):
+    if checkpoint_path is None:
+        checkpoint_path = "vslm_checkpoint_best.pt" if os.path.exists("vslm_checkpoint_best.pt") else "vslm_checkpoint.pt"
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if not os.path.exists(checkpoint_path):
         raise FileNotFoundError(f"Checkpoint not found at '{checkpoint_path}'. Please train the model first.")
