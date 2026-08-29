@@ -216,6 +216,8 @@ def one_shot_train(save_path: str = "vslm_checkpoint.pt"):
     """Quick high-speed training run for instant pretraining."""
     return train_instruction_model(epochs=35, batch_size=8, save_path=save_path)
 
+# Backward-compatibility alias
+train_mog1 = train_instruction_model
 
 if __name__ == "__main__":
     epochs = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 45
