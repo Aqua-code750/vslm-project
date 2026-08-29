@@ -121,12 +121,12 @@ def train_instruction_model(
         n_layer=6,
         d_ffn=768,
         block_size=block_size,
-        dropout=0.05,
+        dropout=0.08,
         tie_weights=True
     )
 
     model = Mog1(config).to(device)
-    optimizer = configure_optimizers(model, lr=max_lr, weight_decay=0.1)
+    optimizer = configure_optimizers(model, lr=max_lr, weight_decay=0.15)
 
     total_steps = len(train_loader) * epochs
     warmup_steps = max(5, int(total_steps * 0.1))

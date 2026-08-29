@@ -13,7 +13,7 @@ class Mog1Config:
         n_layer: int = 6,
         d_ffn: int = 768,
         block_size: int = 256,
-        dropout: float = 0.0,
+        dropout: float = 0.08,
         rope_theta: float = 10000.0,
         tie_weights: bool = True
     ):
@@ -258,7 +258,8 @@ class Mog1(nn.Module):
             loss = F.cross_entropy(
                 logits.view(-1, logits.size(-1)),
                 targets.view(-1),
-                ignore_index=-100
+                ignore_index=-100,
+                label_smoothing=0.08 if self.training else 0.0
             )
 
         return logits, loss, new_kv_caches

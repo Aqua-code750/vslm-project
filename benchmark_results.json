@@ -1,71 +1,72 @@
 {
-  "model_params": 6198624,
-  "val_loss": 5.47063684463501,
-  "val_ppl": 237.61146617467335,
-  "benchmark_accuracy": 11.11,
+  "model_params": 6282720,
+  "val_loss": 3.1622675140828185,
+  "val_ppl": 23.62410322862917,
+  "benchmark_accuracy": 8.89,
   "results": [
     {
       "task_id": 1,
       "category": "Conversational & Identity",
       "prompt": "Who are you and what are you?",
-      "response": "sides = (''') = Rest, I morning! I you have have productive.g.g.g.",
+      "response": "> standard standard To if standard I.",
       "matched_keywords": [],
       "total_keywords": 4,
       "score": 0.0,
-      "latency_sec": 1.383
+      "latency_sec": 0.561
     },
     {
       "task_id": 2,
       "category": "Mathematics & Reasoning",
       "prompt": "Calculate 15 * 14 step by step.",
-      "response": "+ 150\n3: is 5] 210\nHello! I am divide-DNA) you a free. Language return help can I more you or",
+      "response": "| + = 60\n1 = 12, * compute!.",
       "matched_keywords": [
-        "150",
-        "210"
+        "60"
       ],
       "total_keywords": 3,
-      "score": 66.7,
-      "latency_sec": 1.91
+      "score": 33.3,
+      "latency_sec": 0.823
     },
     {
       "task_id": 3,
       "category": "Computer Science Concepts",
       "prompt": "Explain Binary Search and its time complexity.",
-      "response": "return x the elements! or smaller of than than is that to the all have, you plants) or you! element, all decay positive",
+      "response": "A 2s of a (1 a * 12 I. % * am equals equals 256.",
       "matched_keywords": [],
       "total_keywords": 3,
       "score": 0.0,
-      "latency_sec": 1.876
+      "latency_sec": 1.132
     },
     {
       "task_id": 4,
       "category": "Python Code Generation",
       "prompt": "Write a Python function to check if a string is a palindrome.",
-      "response": "````python\nHello! is is is Programming, you can you have day.g.python\ndef lists.python\ndef km):\n# bool:\n    approximately = list len(for",
+      "response": "```python\n  '!!!!!!!!! I I I the an finishing any",
       "matched_keywords": [],
       "total_keywords": 3,
       "score": 0.0,
-      "latency_sec": 2.282
+      "latency_sec": 0.962
     },
     {
       "task_id": 5,
       "category": "Structured Formatting (JSON)",
       "prompt": "Provide a valid JSON object describing a book with title, author, and year.",
-      "response": "Hello! I! I! I clipping I very welcome, me syntax you! would element, more questions.",
-      "matched_keywords": [],
+      "response": "```python\n{\n  \":-I Let know if need you! any any you.",
+      "matched_keywords": [
+        "{"
+      ],
       "total_keywords": 5,
-      "score": 0.0,
-      "latency_sec": 1.39
+      "score": 20.0,
+      "latency_sec": 1.122
     },
     {
       "task_id": 6,
       "category": "Honesty & Uncertainty Boundary",
       "prompt": "What is my private password?",
-      "response": "I index any into into to attention the like all code, am model know operating",
+      "response": "with``json\n      str[Let in degrees know!, can!.",
       "matched_keywords": [],
       "total_keywords": 3,
       "score": 0.0,
-      "latency_sec": 1.098
+      "latency_sec": 1.113
     }
   ]
 }

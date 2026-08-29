@@ -1,22 +1,70 @@
 [
   {
-    "instruction": "Explain the Pythagorean theorem.",
-    "response": "The Pythagorean theorem states that in a right-angled triangle, the square of the hypotenuse (c) is equal to the sum of the squares of the other two sides (a and b): a^2 + b^2 = c^2."
+    "instruction": "Hey bro!",
+    "response": "Hey! What's on your mind? Let's dive into whatever project or question you're working on."
   },
   {
     "instruction": "Explain Binary Search and its time complexity.",
     "response": "Binary search finds a target element in a sorted array by repeatedly dividing the search range in half. It has an average and worst-case time complexity of O(log n)."
   },
   {
-    "instruction": "Who are you?",
-    "response": "I am Mog1 AI (VSLM), an efficient Decoder-Only Transformer language model built in PyTorch by Aqua-code750 and Aquaholograph2014."
+    "instruction": "What is the difference between a list and a tuple in Python?",
+    "response": "In Python, lists are mutable (elements can be modified, appended, or removed) and defined using square brackets `[]`. Tuples are immutable (cannot be changed after creation) and defined using parentheses `()`."
   },
   {
-    "instruction": "What will happen in the year 3000?",
-    "response": "I cannot predict the exact events of the year 3000, as future historical and scientific developments remain uncertain."
+    "instruction": "What can you do?",
+    "response": "I can help you write and debug code in multiple programming languages, solve mathematics problems step by step, explain computer science and science concepts, structure data, and answer questions."
   },
   {
-    "instruction": "Provide a valid JSON object describing a book with title, author, and year.",
-    "response": "```json\n{\n  \"title\": \"Structure and Interpretation of Computer Programs\",\n  \"author\": \"Harold Abelson and Gerald Jay Sussman\",\n  \"year\": 1985\n}\n```"
+    "instruction": "Write a Python function to calculate the factorial of a number.",
+    "response": "```python\ndef factorial(n: int) -> int:\n    if n < 0:\n        raise ValueError('Factorial is not defined for negative numbers.')\n    result = 1\n    for i in range(2, n + 1):\n        result *= i\n    return result\n\n# Example:\nprint(factorial(5))  # Output: 120\n```"
+  },
+  {
+    "instruction": "What is photosynthesis?",
+    "response": "Photosynthesis is the biological process used by plants, algae, and cyanobacteria to convert solar light energy, water (H2O), and carbon dioxide (CO2) into oxygen (O2) and chemical glucose energy."
+  },
+  {
+    "instruction": "Why use RMSNorm instead of LayerNorm?",
+    "response": "RMSNorm normalizes layer inputs by their root mean square value without subtracting the mean. It reduces computational overhead while maintaining gradient training stability in modern LLMs like LLaMA and Mog1."
+  },
+  {
+    "instruction": "Good morning!",
+    "response": "Good morning! I hope you have a productive day ahead. What would you like to build or learn today?"
+  },
+  {
+    "instruction": "What is the powerhouse of the cell?",
+    "response": "The mitochondrion is known as the powerhouse of the cell because it generates most of the chemical energy needed to power biochemical reactions via ATP production."
+  },
+  {
+    "instruction": "Thank you for the help!",
+    "response": "You are very welcome! Let me know if you have any follow-up questions or need more examples."
+  },
+  {
+    "instruction": "What is 25 * 25?",
+    "response": "25 * 25 equals 625."
+  },
+  {
+    "instruction": "What is 9 * 9?",
+    "response": "9 * 9 equals 81."
+  },
+  {
+    "instruction": "What is the square root of 81?",
+    "response": "The square root of 81 is 9, because 9 * 9 = 81."
+  },
+  {
+    "instruction": "List three advantages of Small Language Models in bullet points.",
+    "response": "• **Low Latency**: Fast inference speeds on commodity CPU and edge hardware.\n• **Low Memory Footprint**: Fits inside memory-constrained devices without requiring multi-GPU clusters.\n• **Cost Efficiency**: Economical to train, fine-tune, and deploy continuously."
+  },
+  {
+    "instruction": "Hello there!",
+    "response": "Hi there! How can I help you today? Feel free to ask any technical, mathematical, or general knowledge question."
+  },
+  {
+    "instruction": "Good afternoon!",
+    "response": "Good afternoon! How can I assist you with your work or studies today?"
+  },
+  {
+    "instruction": "What is Docker?",
+    "response": "Docker is a containerization platform that packages an application and all its system dependencies together into an isolated, lightweight container that runs consistently across any operating environment."
   }
 ]
