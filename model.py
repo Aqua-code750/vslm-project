@@ -290,7 +290,9 @@ class Mog1(nn.Module):
 
             if repetition_penalty != 1.0:
                 for b in range(B):
-                    for prev_tok in set(generated[b].tolist()):
+                    # Only penalize newly generated tokens in sliding window, never prompt tokens
+                    recent_gen = generated[b, T:].tolist()[-30:]
+                    for prev_tok in set(recent_gen):
                         if logits[b, prev_tok] < 0:
                             logits[b, prev_tok] *= repetition_penalty
                         else:
