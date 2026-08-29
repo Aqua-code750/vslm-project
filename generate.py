@@ -24,10 +24,10 @@ def generate_text(
     prompt: str = "What is PyTorch?",
     max_new_tokens: int = 60,
     checkpoint_path: str = None,
-    mode: str = "free",
-    temperature: float = 0.7,
-    top_p: float = 0.9,
-    top_k: int = 30
+    mode: str = "smart",
+    temperature: float = 0.15,
+    top_p: float = 0.85,
+    top_k: int = 5
 ) -> str:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     ckpt_path = get_active_checkpoint_path(checkpoint_path)
@@ -56,13 +56,13 @@ def generate_text(
     formatted_prompt = tokenizer.apply_chat_template(messages, add_generation_prompt=True)
     input_ids = torch.tensor([tokenizer.encode(formatted_prompt)], dtype=torch.long, device=device)
 
-    # Configure sampling modes
+    # Configure optimal sampling modes for small language models
     if mode == "exact":
-        temp, tk, tp = 0.2, 5, 0.75
+        temp, tk, tp = 0.0, 1, 1.0
     elif mode == "smart":
-        temp, tk, tp = 0.5, 20, 0.90
+        temp, tk, tp = 0.1, 3, 0.80
     else:  # "free"
-        temp, tk, tp = temperature, top_k, top_p
+        temp, tk, tp = max(temperature, 0.2), min(top_k, 10), top_p
 
     with torch.no_grad():
         output_ids = model.generate(

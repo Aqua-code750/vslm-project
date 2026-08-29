@@ -9,16 +9,16 @@ if hasattr(sys.stdout, 'reconfigure'):
 
 def main():
     print("=" * 60)
-    print("🚀 Mog1 AI (VSLM) Unrestricted Freedom Interactive Terminal Chat")
+    print("🚀 Mog1 AI (VSLM) Interactive Neural Terminal Chat")
     print("Commands:")
-    print("  /free       : Activate Unrestricted Free Creative Freedom Mode (Default)")
-    print("  /smart      : Activate Smart Reasoning Mode")
-    print("  /exact      : Activate Factual Precision Mode")
+    print("  /smart      : Smart Reasoning Mode (Default - Focused & Coherent)")
+    print("  /exact      : Factual Precision Mode (Greedy Argmax)")
+    print("  /free       : Free Creative Mode")
     print("  /auto-train : Trigger background model training")
     print("  /exit       : Quit chat")
     print("=" * 60)
 
-    mode = "free"
+    mode = "smart"
 
     while True:
         try:
