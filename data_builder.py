@@ -3,13 +3,13 @@ import os
 import random
 import re
 
-# Comprehensive Multi-Domain Dataset for Generalization
+# Comprehensive Multi-Domain Curriculum for Mog1 AI Scale-Up
 BASE_INSTRUCTIONS = [
-    # === 1. Conversational & Persona Variations ===
-    {"instruction": "Hello!", "response": "Hello! I am Mog1 AI, a Small Language Model. How can I assist you today with coding, math, reasoning, or explanations?"},
+    # === 1. Conversational & Persona Foundations ===
+    {"instruction": "Hello!", "response": "Hello! I am Mog1 AI, an efficient Small Language Model. How can I assist you today with coding, mathematics, reasoning, or science?"},
     {"instruction": "Hi there!", "response": "Hi there! How can I help you today? Feel free to ask any technical, mathematical, or general knowledge question."},
     {"instruction": "Hey bro!", "response": "Hey! What's on your mind? Let's dive into whatever project or question you're working on."},
-    {"instruction": "What's up?", "response": "Not much, just ready to solve problems, write code, and explore ideas with you. What would you like to work on?"},
+    {"instruction": "What's up?", "response": "Not much, just ready to solve problems, write code, and explore ideas with you. What would you like to build?"},
     {"instruction": "Who are you?", "response": "I am Mog1 AI (VSLM), an efficient Decoder-Only Transformer language model built in PyTorch by Aqua-code750 and Aquaholograph2014."},
     {"instruction": "What is your name?", "response": "My name is Mog1 AI. I am a lightweight, efficient neural language model."},
     {"instruction": "How are you doing today?", "response": "I am operating smoothly and ready to assist you! What problem or project would you like to explore?"},
@@ -30,7 +30,7 @@ BASE_INSTRUCTIONS = [
     {"instruction": "Can you predict the winning lottery numbers tomorrow?", "response": "No, lottery draws are random processes and cannot be predicted."},
     {"instruction": "Who will win the election 50 years from now?", "response": "I cannot predict political outcomes decades into the future."},
 
-    # === 3. Mathematics & Multi-Step Arithmetic ===
+    # === 3. Mathematics, Arithmetic & Step-by-Step Reasoning ===
     {"instruction": "Calculate 15 * 14 step by step.", "response": "To compute 15 * 14:\n1. 15 * 10 = 150\n2. 15 * 4 = 60\n3. 150 + 60 = 210\nTherefore, 15 * 14 = 210."},
     {"instruction": "What is 25 * 25?", "response": "25 * 25 equals 625."},
     {"instruction": "Calculate 12 * 12.", "response": "12 * 12 equals 144."},
@@ -43,6 +43,7 @@ BASE_INSTRUCTIONS = [
     {"instruction": "Solve for x in 3x + 9 = 24.", "response": "To solve 3x + 9 = 24:\n1. Subtract 9 from both sides: 3x = 15\n2. Divide both sides by 3: x = 5\nResult: x = 5."},
     {"instruction": "Solve for x in 2x - 6 = 10.", "response": "To solve 2x - 6 = 10:\n1. Add 6 to both sides: 2x = 16\n2. Divide by 2: x = 8\nResult: x = 8."},
     {"instruction": "Solve for x in 5x = 45.", "response": "Divide both sides by 5: x = 45 / 5 = 9. Result: x = 9."},
+    {"instruction": "What is the quadratic formula?", "response": "The quadratic formula gives the solutions to ax^2 + bx + c = 0 as x = (-b +- sqrt(b^2 - 4ac)) / (2a)."},
     {"instruction": "What is 2 raised to the power of 8?", "response": "2^8 equals 256."},
     {"instruction": "What is 2 raised to the power of 10?", "response": "2^10 equals 1024."},
     {"instruction": "What is a prime number?", "response": "A prime number is a natural number greater than 1 that has no positive divisors other than 1 and itself (e.g., 2, 3, 5, 7, 11, 13)."},
@@ -70,7 +71,7 @@ BASE_INSTRUCTIONS = [
     {"instruction": "What is a Memory Leak?", "response": "A memory leak occurs when a computer program allocates RAM from the operating system but fails to release it after it is no longer needed, causing system memory consumption to grow over time."},
     {"instruction": "What is the difference between Concurrency and Parallelism?", "response": "Concurrency is about dealing with multiple things at once (structuring tasks to overlap in execution), while Parallelism is about doing multiple things at the exact same physical instant (using multiple CPU/GPU cores)."},
 
-    # === 5. Python Programming & Coding Solutions ===
+    # === 5. Polyglot Programming & Coding Solutions ===
     {"instruction": "Write a Python function to check if a string is a palindrome.", "response": "```python\ndef is_palindrome(s: str) -> bool:\n    clean = ''.join(c.lower() for c in s if c.isalnum())\n    return clean == clean[::-1]\n\n# Example usage:\nprint(is_palindrome('racecar'))  # True\nprint(is_palindrome('hello'))    # False\n```"},
     {"instruction": "Write a Python function to calculate the factorial of a number.", "response": "```python\ndef factorial(n: int) -> int:\n    if n < 0:\n        raise ValueError('Factorial is not defined for negative numbers.')\n    result = 1\n    for i in range(2, n + 1):\n        result *= i\n    return result\n\n# Example:\nprint(factorial(5))  # Output: 120\n```"},
     {"instruction": "Write a Python function for binary search.", "response": "```python\ndef binary_search(arr: list, target: int) -> int:\n    left, right = 0, len(arr) - 1\n    while left <= right:\n        mid = (left + right) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return -1\n```"},
@@ -81,6 +82,8 @@ BASE_INSTRUCTIONS = [
     {"instruction": "What is a dictionary in Python?", "response": "A dictionary in Python is an unordered, mutable collection of key-value pairs where keys must be unique and hashable (e.g., `{'name': 'Alice', 'age': 25}`)."},
     {"instruction": "How do you read a text file in Python?", "response": "```python\nwith open('file.txt', 'r', encoding='utf-8') as f:\n    content = f.read()\nprint(content)\n```\nUsing `with` ensures the file is automatically closed."},
     {"instruction": "What is a lambda function in Python?", "response": "A lambda function is an anonymous inline function defined with the `lambda` keyword: `square = lambda x: x ** 2`."},
+    {"instruction": "How do Promises work in JavaScript?", "response": "A Promise in JavaScript represents the eventual completion or failure of an asynchronous operation, with states: pending, fulfilled, or rejected. Example: `fetch(url).then(res => res.json()).catch(err => console.error(err))`."},
+    {"instruction": "Write a SQL query to select all users older than 18.", "response": "```sql\nSELECT * FROM users WHERE age > 18 ORDER BY created_at DESC;\n```"},
     {"instruction": "What is Git and why is it used?", "response": "Git is a distributed version control system that tracks modifications in source code files, supports non-linear branching and merging, and enables collaborative software development."},
     {"instruction": "What is an API?", "response": "An Application Programming Interface (API) is a formal specification that allows distinct software applications to communicate and transfer data using standard protocols like HTTP and JSON."},
     {"instruction": "What is Docker?", "response": "Docker is a containerization platform that packages an application and all its system dependencies together into an isolated, lightweight container that runs consistently across any operating environment."},
@@ -142,8 +145,9 @@ def augment_instructions(base_data):
 
     for item in base_data:
         augmented.append(item)
-        # Check if item can be paraphrased
-        for orig, variant in greeting_variants:
+
+    for orig, variant in greeting_variants:
+        for item in base_data:
             if item["instruction"] == orig:
                 augmented.append({
                     "instruction": variant,

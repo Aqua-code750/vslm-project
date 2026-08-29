@@ -116,17 +116,17 @@ def train_instruction_model(
 
     config = Mog1Config(
         vocab_size=tokenizer.vocab_size,
-        n_embd=288,
+        n_embd=192,
         n_head=6,
-        n_layer=6,
-        d_ffn=768,
+        n_layer=4,
+        d_ffn=576,
         block_size=block_size,
-        dropout=0.08,
+        dropout=0.01,
         tie_weights=True
     )
 
     model = Mog1(config).to(device)
-    optimizer = configure_optimizers(model, lr=max_lr, weight_decay=0.15)
+    optimizer = configure_optimizers(model, lr=max_lr, weight_decay=0.01)
 
     total_steps = len(train_loader) * epochs
     warmup_steps = max(5, int(total_steps * 0.1))

@@ -8,12 +8,12 @@ class Mog1Config:
     def __init__(
         self,
         vocab_size: int = 2048,
-        n_embd: int = 288,
+        n_embd: int = 192,
         n_head: int = 6,
-        n_layer: int = 6,
-        d_ffn: int = 768,
+        n_layer: int = 4,
+        d_ffn: int = 576,
         block_size: int = 256,
-        dropout: float = 0.08,
+        dropout: float = 0.01,
         rope_theta: float = 10000.0,
         tie_weights: bool = True
     ):

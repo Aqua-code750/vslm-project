@@ -1,70 +1,70 @@
 [
   {
-    "instruction": "Hey bro!",
-    "response": "Hey! What's on your mind? Let's dive into whatever project or question you're working on."
+    "instruction": "Who are you?",
+    "response": "I am Mog1 AI (VSLM), an efficient Decoder-Only Transformer language model built in PyTorch by Aqua-code750 and Aquaholograph2014."
   },
   {
-    "instruction": "Explain Binary Search and its time complexity.",
-    "response": "Binary search finds a target element in a sorted array by repeatedly dividing the search range in half. It has an average and worst-case time complexity of O(log n)."
+    "instruction": "What is the difference between BFS and DFS?",
+    "response": "Breadth-First Search (BFS) explores all neighbor nodes at the present depth before moving deeper (using a Queue), whereas Depth-First Search (DFS) explores as far as possible along each branch before backtracking (using a Stack or recursion)."
   },
   {
-    "instruction": "What is the difference between a list and a tuple in Python?",
-    "response": "In Python, lists are mutable (elements can be modified, appended, or removed) and defined using square brackets `[]`. Tuples are immutable (cannot be changed after creation) and defined using parentheses `()`."
-  },
-  {
-    "instruction": "What can you do?",
-    "response": "I can help you write and debug code in multiple programming languages, solve mathematics problems step by step, explain computer science and science concepts, structure data, and answer questions."
-  },
-  {
-    "instruction": "Write a Python function to calculate the factorial of a number.",
-    "response": "```python\ndef factorial(n: int) -> int:\n    if n < 0:\n        raise ValueError('Factorial is not defined for negative numbers.')\n    result = 1\n    for i in range(2, n + 1):\n        result *= i\n    return result\n\n# Example:\nprint(factorial(5))  # Output: 120\n```"
-  },
-  {
-    "instruction": "What is photosynthesis?",
-    "response": "Photosynthesis is the biological process used by plants, algae, and cyanobacteria to convert solar light energy, water (H2O), and carbon dioxide (CO2) into oxygen (O2) and chemical glucose energy."
-  },
-  {
-    "instruction": "Why use RMSNorm instead of LayerNorm?",
+    "instruction": "What is RMSNorm and why is it preferred over LayerNorm?",
     "response": "RMSNorm normalizes layer inputs by their root mean square value without subtracting the mean. It reduces computational overhead while maintaining gradient training stability in modern LLMs like LLaMA and Mog1."
   },
   {
-    "instruction": "Good morning!",
-    "response": "Good morning! I hope you have a productive day ahead. What would you like to build or learn today?"
+    "instruction": "Good night!",
+    "response": "Good night! Rest well, and feel free to return whenever you have more questions."
   },
   {
-    "instruction": "What is the powerhouse of the cell?",
-    "response": "The mitochondrion is known as the powerhouse of the cell because it generates most of the chemical energy needed to power biochemical reactions via ATP production."
+    "instruction": "Write a SQL query to select all users older than 18.",
+    "response": "```sql\nSELECT * FROM users WHERE age > 18 ORDER BY created_at DESC;\n```"
   },
   {
-    "instruction": "Thank you for the help!",
-    "response": "You are very welcome! Let me know if you have any follow-up questions or need more examples."
+    "instruction": "Find the value of x in 3x + 9 = 24.",
+    "response": "To solve 3x + 9 = 24:\n1. Subtract 9 from both sides: 3x = 15\n2. Divide both sides by 3: x = 5\nResult: x = 5."
   },
   {
-    "instruction": "What is 25 * 25?",
-    "response": "25 * 25 equals 625."
+    "instruction": "Provide a valid JSON object describing a user profile.",
+    "response": "```json\n{\n  \"username\": \"developer_42\",\n  \"role\": \"Software Engineer\",\n  \"active\": true\n}\n```"
   },
   {
-    "instruction": "What is 9 * 9?",
-    "response": "9 * 9 equals 81."
+    "instruction": "Thanks!",
+    "response": "Glad I could help! Let me know if there's anything else you need."
+  },
+  {
+    "instruction": "Explain RoPE in Transformer architectures.",
+    "response": "Rotary Position Embedding (RoPE) encodes token positions by multiplying query and key vectors by rotation matrices. It incorporates relative positional distance directly into the dot-product attention score."
+  },
+  {
+    "instruction": "Can you travel in physical space?",
+    "response": "No, I am a software-based neural network model without physical embodiment."
   },
   {
     "instruction": "What is the square root of 81?",
     "response": "The square root of 81 is 9, because 9 * 9 = 81."
   },
   {
-    "instruction": "List three advantages of Small Language Models in bullet points.",
-    "response": "• **Low Latency**: Fast inference speeds on commodity CPU and edge hardware.\n• **Low Memory Footprint**: Fits inside memory-constrained devices without requiring multi-GPU clusters.\n• **Cost Efficiency**: Economical to train, fine-tune, and deploy continuously."
+    "instruction": "Solve for x in 2x - 6 = 10.",
+    "response": "To solve 2x - 6 = 10:\n1. Add 6 to both sides: 2x = 16\n2. Divide by 2: x = 8\nResult: x = 8."
   },
   {
-    "instruction": "Hello there!",
-    "response": "Hi there! How can I help you today? Feel free to ask any technical, mathematical, or general knowledge question."
+    "instruction": "What is 2 raised to the power of 10?",
+    "response": "2^10 equals 1024."
   },
   {
-    "instruction": "Good afternoon!",
-    "response": "Good afternoon! How can I assist you with your work or studies today?"
+    "instruction": "What is the boiling point of water?",
+    "response": "Under standard atmospheric pressure (1 atm), the boiling point of water is 100 degrees Celsius (212 degrees Fahrenheit)."
   },
   {
-    "instruction": "What is Docker?",
-    "response": "Docker is a containerization platform that packages an application and all its system dependencies together into an isolated, lightweight container that runs consistently across any operating environment."
+    "instruction": "What's up?",
+    "response": "Not much, just ready to solve problems, write code, and explore ideas with you. What would you like to build?"
+  },
+  {
+    "instruction": "Are you an AI?",
+    "response": "Yes, I am Mog1 AI, an artificial intelligence language model running on neural Transformer weights."
+  },
+  {
+    "instruction": "What is Temperature in text generation?",
+    "response": "Temperature scales the logits before the softmax operation during autoregressive sampling. Lower temperature (<0.5) makes generation more deterministic and focused, while higher temperature (>0.8) increases randomness and diversity."
   }
 ]
