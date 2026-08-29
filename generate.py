@@ -57,7 +57,7 @@ def get_loaded_model_and_tokenizer(checkpoint_path: str = None) -> Tuple[Mog1, S
 
 def generate_text(
     prompt: str = "What is PyTorch?",
-    max_new_tokens: int = 60,
+    max_new_tokens: int = 160,
     checkpoint_path: str = None,
     mode: str = "smart",
     temperature: float = 0.1,

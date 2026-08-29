@@ -132,10 +132,10 @@ if __name__ == "__main__":
                     fn=respond,
                     additional_inputs=[
                         gr.Radio(["Smart Reasoning Mode", "Free Creative Freedom Mode", "Exact Factual Mode"], label="Reasoning & Generation Mode", value="Smart Reasoning Mode"),
-                        gr.Slider(10, 200, value=60, step=5, label="Max New Tokens"),
-                        gr.Slider(0.1, 1.5, value=0.7, step=0.05, label="Temperature"),
-                        gr.Slider(0.1, 1.0, value=0.9, step=0.05, label="Top-P (Nucleus Threshold)"),
-                        gr.Slider(1, 50, value=30, step=1, label="Top-K Candidate Window")
+                        gr.Slider(10, 256, value=160, step=5, label="Max New Tokens"),
+                        gr.Slider(0.1, 1.5, value=0.2, step=0.05, label="Temperature"),
+                        gr.Slider(0.1, 1.0, value=0.85, step=0.05, label="Top-P (Nucleus Threshold)"),
+                        gr.Slider(1, 50, value=5, step=1, label="Top-K Candidate Window")
                     ],
                 )
 

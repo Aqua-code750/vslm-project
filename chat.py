@@ -64,7 +64,7 @@ def main():
                 print(f"🚀 {msg}")
             continue
 
-        res = generate_text(prompt, max_new_tokens=80, mode=mode, history=history)
+        res = generate_text(prompt, max_new_tokens=160, mode=mode, history=history)
         print(f"Mog1: {res}")
 
         # Append to history
