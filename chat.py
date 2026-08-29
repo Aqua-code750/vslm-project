@@ -1,7 +1,7 @@
 import os
 import sys
 import torch
-from generate import generate_text
+from generate import generate_text, get_loaded_model_and_tokenizer
 from auto_train import trigger_auto_train, is_auto_training
 
 if hasattr(sys.stdout, 'reconfigure'):
@@ -14,11 +14,18 @@ def main():
     print("  /smart      : Smart Reasoning Mode (Default - Focused & Coherent)")
     print("  /exact      : Factual Precision Mode (Greedy Argmax)")
     print("  /free       : Free Creative Mode")
+    print("  /clear      : Reset conversation history")
     print("  /auto-train : Trigger background model training")
     print("  /exit       : Quit chat")
     print("=" * 60)
 
+    # Preload model weights on startup
+    print("⚡ Loading Mog1 Neural Weights...", flush=True)
+    get_loaded_model_and_tokenizer()
+    print("✅ Model Ready!\n" + "-" * 60)
+
     mode = "smart"
+    history = []
 
     while True:
         try:
@@ -33,9 +40,13 @@ def main():
         if prompt.lower() in ["/exit", "exit", "quit"]:
             print("Goodbye!")
             break
+        elif prompt.lower() == "/clear":
+            history = []
+            print("🧹 Conversation history cleared.")
+            continue
         elif prompt.lower() == "/free":
             mode = "free"
-            print("🎨 Switched to Unrestricted Free Creative Freedom Mode.")
+            print("🎨 Switched to Free Creative Mode.")
             continue
         elif prompt.lower() == "/smart":
             mode = "smart"
@@ -53,8 +64,16 @@ def main():
                 print(f"🚀 {msg}")
             continue
 
-        res = generate_text(prompt, max_new_tokens=60, mode=mode)
+        res = generate_text(prompt, max_new_tokens=80, mode=mode, history=history)
         print(f"Mog1: {res}")
+
+        # Append to history
+        history.append({"role": "user", "content": prompt})
+        history.append({"role": "assistant", "content": res})
+
+        # Keep last 4 turns
+        if len(history) > 8:
+            history = history[-8:]
 
 if __name__ == "__main__":
     main()
