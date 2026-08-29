@@ -1,452 +1,94 @@
 import os
 import sys
-import re
-import urllib.request
-import urllib.parse
+import time
 import json
 import torch
-from model import Mog1
+import torch.nn.functional as F
+
+from model import Mog1, Mog1Config
 from dataset import SubwordTokenizer
-from train import train_mog1, one_shot_train
+from train import train_instruction_model, one_shot_train
 from auto_train import trigger_auto_train, is_auto_training
 
+# Set encoding for Windows terminal
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 CHECKPOINT_PATH = "vslm_checkpoint.pt"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-KNOWLEDGE_CACHE = {}
-
-def fetch_universal_world_knowledge(query: str) -> str:
-    q = query.strip()
-    if not q:
-        return ""
-    
-    # In-memory Fast Cache check (0.0001s response time)
-    if q in KNOWLEDGE_CACHE:
-        return KNOWLEDGE_CACHE[q]
-
-    lower_q = q.lower()
-    
-    # 1. Automated Math & Arithmetic Evaluator (Instant)
-    if re.match(r'^[0-9\s\+\-\*\/\^\(\)\.]+\??$', q):
-        try:
-            clean_math = q.replace('?', '').replace('^', '**')
-            res = eval(clean_math, {"__builtins__": None}, {})
-            ans = f"🧮 **Mathematical Calculation**:\n\nInput  : `{q.replace('?', '')}`\nResult : **{res}**"
-            KNOWLEDGE_CACHE[q] = ans
-            return ans
-        except Exception:
-            pass
-
-    # 2. Automated Weather API Lookup
-    if "weather" in lower_q or "temperature" in lower_q:
-        city_match = re.search(r'(?:weather|temperature)\s+(?:in|for|at)?\s*([a-zA-Z\s]+)', q, re.IGNORECASE)
-        if city_match:
-            city = city_match.group(1).strip()
-            try:
-                geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(city)}&count=1&language=en&format=json"
-                req = urllib.request.Request(geo_url, headers={'User-Agent': 'Mog1AI/1.0'})
-                with urllib.request.urlopen(req, timeout=1.2) as resp:
-                    gdata = json.loads(resp.read().decode())
-                    if 'results' in gdata and len(gdata['results']) > 0:
-                        lat = gdata['results'][0]['latitude']
-                        lon = gdata['results'][0]['longitude']
-                        name = gdata['results'][0]['name']
-                        country = gdata['results'][0].get('country', '')
-                        
-                        wurl = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
-                        with urllib.request.urlopen(urllib.request.Request(wurl, headers={'User-Agent': 'Mog1AI/1.0'}), timeout=1.2) as wresp:
-                            wdata = json.loads(wresp.read().decode())
-                            if 'current_weather' in wdata:
-                                cw = wdata['current_weather']
-                                temp_c = cw['temperature']
-                                wind = cw['windspeed']
-                                ans = f"🌤️ **Current Weather in {name}, {country}**:\n\n• **Temperature**: {temp_c}°C\n• **Wind Speed**: {wind} km/h"
-                                KNOWLEDGE_CACHE[q] = ans
-                                return ans
-            except Exception:
-                pass
-
-    # 3. Casual & Friendly Conversational Persona Engine
-    import random
-    clean_casual = re.sub(r'[^\w\s]', '', lower_q).strip()
-
-    if clean_casual in ["hey", "hi", "hello", "yo", "sup", "wsp", "whats up", "what up", "hey bro", "yo bro", "hi there"]:
-        greetings = [
-            "Hey! What's going on? How can I help you today? 😊",
-            "Yo! What's up? Ready to chat, code, or solve whatever is on your mind! 🚀",
-            "Hey there! Great to see you. What are we working on today?",
-            "Wassup! I'm here and ready. What's on your mind?"
-        ]
-        return random.choice(greetings)
-
-    if any(k in lower_q for k in ["how are you", "how r u", "how you doing", "hows your day", "how is your day", "hows it going", "hru"]):
-        return "I'm doing great, thanks for asking! 😄 Feeling fast and ready to help. How about you? How has your day been?"
-
-    if any(k in lower_q for k in ["what are you doing", "what r u doing", "wyd", "what you up to"]):
-        return "Just chilling in the cloud, processing tokens and hanging out with you! What are you up to right now? 😎"
-
-    if any(k in lower_q for k in ["tell me a joke", "make me laugh", "say a joke", "tell a joke"]):
-        jokes = [
-            "Why do programmers prefer dark mode? Because light attracts bugs! 🐛😂",
-            "Why did the neural network go to school? To improve its feature extraction! 🧠",
-            "There are only 10 types of people in the world: those who understand binary, and those who don't. 💻",
-            "Why was the JavaScript developer sad? Because they didn't Node how to Express themselves! ☕"
-        ]
-        return f"😄 Here's one for you:\n\n**{random.choice(jokes)}**"
-
-    if any(k in lower_q for k in ["im bored", "i am bored", "bored", "what should i do"]):
-        return (
-            "Boredom detected! Let's fix that! 🎮 Here are a few fun things we could do:\n\n"
-            "1. 🧠 **Trivia Challenge**: Ask me to quiz you on science, video games, or coding!\n"
-            "2. 💻 **Build Something Cool**: We can make a mini Python game or a web app!\n"
-            "3. 🤖 **micro:bit Experiment**: Let's write a MicroPython script with sound and animations!\n"
-            "4. 💬 **Just Chill & Chat**: Tell me what you're interested in lately!"
-        )
-
-    if clean_casual in ["lol", "lmao", "haha", "hahaha", "xd", "rofl"]:
-        return "Haha glad I could make you smile! What else is on your mind? 😄"
-
-    if any(k in lower_q for k in ["good morning", "gm"]):
-        return "Good morning! ☀️ Hope you have an awesome and productive day today. What's on the agenda?"
-
-    if any(k in lower_q for k in ["good night", "gn", "sweet dreams"]):
-        return "Good night! 🌙 Get some great rest, and see you next time you want to build or chat!"
-
-    if any(k in lower_q for k in ["you are cool", "youre cool", "you are awesome", "you rock", "i love you", "nice one", "good job", "thanks bro"]):
-        return "Appreciate it so much! You're awesome too! Let's keep cooking! 🔥🚀"
-
-    # 4. Temporal Awareness: Real-Time Date & Current Year (2026)
-    from datetime import datetime
-    now_dt = datetime.now()
-    cur_year = now_dt.year
-    cur_date_str = now_dt.strftime("%A, %B %d, %Y")
-    cur_time_str = now_dt.strftime("%I:%M %p")
-
-    if any(k in lower_q for k in ["what year", "current year", "what is the year", "which year"]):
-        return f"📅 The current year is **{cur_year}**."
-
-    if any(k in lower_q for k in ["what date", "today's date", "current date", "what day is today", "what is today"]):
-        return f"📅 Today is **{cur_date_str}**."
-
-    if any(k in lower_q for k in ["what time", "current time", "time now", "clock"]):
-        return f"🕒 The current system time is **{cur_time_str}** ({cur_date_str})."
-
-    # 4. Special Topic Handlers (e.g. 'iPad kids')
-    if "ipad kid" in lower_q or "ipad kids" in lower_q:
-        ans = (
-            "📱 **Understanding & Preventing 'iPad Kids' (Excessive Screen Time)**:\n\n"
-            "**Why It Happens (Causes)**:\n"
-            "1. **Digital Pacification**: Tablets and short-form videos are frequently used by busy parents as quick distractions to calm restless toddlers.\n"
-            "2. **Dopamine Loops**: Algorithmic video platforms feed continuous, high-stimulation content that keeps young minds hooked.\n"
-            "3. **Lack of Alternative Engagement**: Limited physical play or interactive hobbies leads kids to default to digital screens.\n\n"
-            "**How to Prevent & Fix It (Solutions)**:\n"
-            "1. **Set Firm Daily Screen Limits**: Use built-in Screen Time locks (e.g. max 30-60 mins/day for non-educational content).\n"
-            "2. **Encourage Hands-On Activities**: Replace tablet time with outdoor play, sports, reading, drawing, or board games.\n"
-            "3. **Model Healthy Habits**: Establish 'screen-free zones' (like dinner time and bedtime) for the whole family."
-        )
-        KNOWLEDGE_CACHE[q] = ans
-        return ans
-
-    # 5. Fast Wikipedia Search Engine (with multi-query fallback)
-    clean_q = re.sub(r'^(what is the|what is|who is|who discovered|who wrote|where is|how does|explain|tell me about|why is|how to prevent|how to fix|latest updates on|latest on|news about|what happened to)\s+', '', q, flags=re.IGNORECASE).strip()
-    clean_q = re.sub(r'[^\w\s]', '', clean_q).strip()
-
-    search_queries = [clean_q if clean_q else q, f"{clean_q} {cur_year}", q]
-    for sq in search_queries:
-        if not sq:
-            continue
-        try:
-            search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(sq)}&format=json"
-            req = urllib.request.Request(search_url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
-            with urllib.request.urlopen(req, timeout=1.2) as resp:
-                sdata = json.loads(resp.read().decode())
-                if 'query' in sdata and 'search' in sdata['query'] and len(sdata['query']['search']) > 0:
-                    page_title = sdata['query']['search'][0]['title']
-                    summary_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(page_title)}"
-                    sum_req = urllib.request.Request(summary_url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
-                    with urllib.request.urlopen(sum_req, timeout=1.2) as sum_resp:
-                        sum_data = json.loads(sum_resp.read().decode())
-                        if 'extract' in sum_data and sum_data['extract'] and not 'refer to:' in sum_data['extract']:
-                            ans = (
-                                f"### 📚 **{page_title}**\n\n"
-                                f"{sum_data['extract']}\n\n"
-                                f"> 🌐 *Live Knowledge verified for {cur_year} &bull; Powered by Mog1 AI Real-Time Search*"
-                            )
-                            KNOWLEDGE_CACHE[q] = ans
-                            return ans
-        except Exception:
-            pass
-
-    # 6. Fast DuckDuckGo Search Engine (1.2s Timeout)
-    try:
-        url = f"https://api.duckduckgo.com/?q={urllib.parse.quote(q)}&format=json&no_html=1&skip_disambig=1"
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mog1AI-Universal/1.0'})
-        with urllib.request.urlopen(req, timeout=1.2) as resp:
-            data = json.loads(resp.read().decode())
-            extracted_text = data.get('AbstractText') or data.get('Answer') or data.get('Definition')
-            if not extracted_text and 'RelatedTopics' in data and len(data['RelatedTopics']) > 0:
-                extracted_text = data['RelatedTopics'][0].get('Text')
-                
-            if extracted_text:
-                ans = (
-                    f"### 🔍 **Latest Information on '{q}'**\n\n"
-                    f"{extracted_text}\n\n"
-                    f"> 🌐 *Real-Time Web Intelligence ({cur_year})*"
-                )
-                KNOWLEDGE_CACHE[q] = ans
-                return ans
-    except Exception:
-        pass
-
-    # 7. Universal X10 Deep Thinking & Reasoning Synthesizer (o1 / DeepSeek-R1 Style)
-    ans = (
-        f"> 💭 **X10 Deep Thinking & Chain-of-Thought Reasoning**:\n"
-        f"> 1. **Intent Deconstruction**: Deconstructed query '{q}' into core principles, active {cur_year} status, and cross-domain relationships.\n"
-        f"> 2. **Mechanics & Logic Verification**: Evaluated underlying mathematical, computational, and architectural mechanics.\n"
-        f"> 3. **Edge-Case & Performance Analysis**: Validated scalability, latency constraints, and real-world implementation nuances.\n"
-        f"> 4. **Synthesis**: Formulated a structured, authoritative, production-grade resolution.\n\n"
-        f"### 🌐 In-Depth Analysis & Authoritative Solution: **{q}** ({cur_year})\n\n"
-        f"#### 📌 1. Core Concept & Current State ({cur_year})\n"
-        f"**{q}** represents a significant topic across modern computing, technology, artificial intelligence, and scientific research. In {cur_year}, developments in this area focus on enhanced efficiency, integration with modern AI architectures, and practical industry applications.\n\n"
-        f"#### 🔬 2. Deep Technical Breakdown & Operational Mechanics\n"
-        f"• **Foundational Principles**: Governed by core algorithmic, logical, or physical frameworks that dictate behavior and operational performance.\n"
-        f"• **Modern Implementation**: Leverages modern high-throughput pipelines, automated tooling, and scalable system design.\n"
-        f"• **Key Considerations**: Balancing latency, computational complexity, safety, and reliability.\n\n"
-        f"#### 💡 3. Real-World Applications & Practical Use Cases\n"
-        f"• Widely adopted across cutting-edge production systems, enterprise software, and research workflows.\n"
-        f"• Serves as a vital building block for developers, scientists, and engineers.\n\n"
-        f"> 🎯 **Definitive Conclusion ({cur_year})**: Understanding **{q}** provides a crucial foundation for building scalable, high-performance systems."
-    )
-    KNOWLEDGE_CACHE[q] = ans
-    return ans
-
 def load_or_train_model():
     if not os.path.exists(CHECKPOINT_PATH):
         print("Pretraining Mog1 AI Model on startup...", flush=True)
-        one_shot_train(save_path=CHECKPOINT_PATH)
+        train_instruction_model(epochs=35, save_path=CHECKPOINT_PATH)
 
     checkpoint = torch.load(CHECKPOINT_PATH, map_location=DEVICE, weights_only=False)
     config = checkpoint['config']
 
     tokenizer = SubwordTokenizer(
         stoi=checkpoint.get('stoi'),
-        itos=checkpoint.get('itos'),
-        use_tiktoken=checkpoint.get('use_tiktoken', False)
+        itos=checkpoint.get('itos')
     )
 
     model = Mog1(config).to(DEVICE)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
+    print(f"Loaded Mog1 Neural Model ({model.get_num_params():,} parameters) on {DEVICE}.", flush=True)
     return model, tokenizer
 
 model, tokenizer = load_or_train_model()
 
-def clean_generated_text(text: str) -> str:
-    if not text:
-        return ""
-    # Strip prompt tags, training metrics, and format symbols
-    t = text
-    for artifact in ["User:", "Mog1:", "loss", "::", "textWhat", "function learning"]:
-        t = t.replace(artifact, "")
-    
-    # Clean leading/trailing punctuation and spaces
-    t = re.sub(r'^[,\.\s:\?\!\(\)\-–\_]+', '', t).strip()
-    t = re.sub(r'[,\.\s:\?\!\(\)\-–\_]+$', '', t).strip()
-    
-    # Fix broken punctuation spacing (e.g. "for ? :" -> "for?")
-    t = re.sub(r'\s+([,\.\?\!])', r'\1', t)
-    t = re.sub(r'[\?\.\!]{2,}', '.', t)
-    t = re.sub(r'\s+', ' ', t)
-    
-    # Capitalize first letter and ensure ending punctuation
-    if t:
-        t = t[0].upper() + t[1:]
-        if not t.endswith(('.', '!', '?')):
-            t += '.'
-    return t
-
-def is_coherent(text: str) -> bool:
-    if not text or len(text) < 10:
-        return False
-    
-    # Reject strings with garbled punctuation or prompt markers
-    if any(bad in text.lower() for bad in ["what for ?", "loss ai", "function learning", "::", "of? ?", "( of"]):
-        return False
-        
-    words = text.split()
-    if len(words) < 3:
-        return False
-        
-    # Ensure high ratio of standard english words
-    valid_words = [w for w in words if re.match(r'^[a-zA-Z0-9\.\,\?\!\'\-]+$', w)]
-    if len(valid_words) / len(words) < 0.85:
-        return False
-        
-    return True
-
-def extract_history_context(history) -> str:
-    if not history:
-        return ""
-    context_parts = []
-    # Support both list of tuples [user, bot] and list of dicts [{'role':..., 'content':...}]
-    for item in history[-3:]: # last 3 turns
-        if isinstance(item, (list, tuple)) and len(item) == 2:
-            u, b = item[0], item[1]
-            if u: context_parts.append(f"User: {u}")
-            if b: context_parts.append(f"Mog1: {b[:150]}") # Truncate long bot replies
-        elif isinstance(item, dict) and 'role' in item and 'content' in item:
-            role = "User" if item['role'] == 'user' else "Mog1"
-            context_parts.append(f"{role}: {item['content'][:150]}")
-    return "\n".join(context_parts)
-
-def respond(message: str, history, mode: str, max_tokens: int, temperature: float, top_p: float, top_k: int):
+def respond(message: str, history, mode: str, max_tokens: int, temperature: float, top_p: float, top_k: int) -> str:
+    """
+    Pure Neural Autoregressive Generation using Mog1 Transformer, RoPE, RMSNorm, SwiGLU, and ChatML formatting.
+    """
     if not message or not message.strip():
         return ""
 
-    lower_msg = message.strip().lower()
+    messages = [
+        {"role": "system", "content": "You are Mog1 AI, a helpful, coherent, and precise conversational language model."}
+    ]
 
-    # Build context from previous conversation turns for follow-up handling
-    past_context = extract_history_context(history)
-    
-    # 0. Phi-3 Style Automated Code Generator
-    code_trigger = re.search(r'(code|write|create|program|script|function|implement|how to)\s+.*(python|javascript|js|html|css|c\+\+|java|c#|sql|algorithm|sort|search|loop)', lower_msg)
-    if code_trigger or any(lang in lower_msg for lang in ["python script", "javascript code", "html css", "c++ program"]):
-        lang = "python"
-        if "javascript" in lower_msg or "js" in lower_msg:
-            lang = "javascript"
-        elif "html" in lower_msg or "css" in lower_msg:
-            lang = "html"
-        elif "c++" in lower_msg or "cpp" in lower_msg:
-            lang = "cpp"
-        elif "sql" in lower_msg:
-            lang = "sql"
+    # Format multi-turn conversation history
+    if history:
+        for item in history[-3:]:
+            if isinstance(item, (list, tuple)) and len(item) == 2:
+                u, b = item
+                if u: messages.append({"role": "user", "content": str(u)})
+                if b: messages.append({"role": "assistant", "content": str(b)})
+            elif isinstance(item, dict) and "role" in item and "content" in item:
+                messages.append({"role": item["role"], "content": str(item["content"])})
 
-        if lang == "python":
-            return (
-                f"💻 **Python Solution**:\n\n"
-                f"```python\n"
-                f"# Mog1 AI Code Solution for: {message.strip()}\n"
-                f"def solution():\n"
-                f"    print('Executing code for: {message.strip()}')\n"
-                f"    return True\n\n"
-                f"if __name__ == '__main__':\n"
-                f"    solution()\n"
-                f"```\n\n"
-                f"✨ **Explanation**:\n"
-                f"• This Python script provides a clean, executable implementation for your request.\n"
-                f"• You can run it directly in any Python 3.x environment!"
-            )
-        elif lang == "javascript":
-            return (
-                f"💻 **JavaScript Solution**:\n\n"
-                f"```javascript\n"
-                f"// Mog1 AI JS Solution for: {message.strip()}\n"
-                f"function solution() {{\n"
-                f"    console.log('Executing JS code for: {message.strip()}');\n"
-                f"    return true;\n"
-                f"}}\n\n"
-                f"solution();\n"
-                f"```\n\n"
-                f"✨ **Explanation**:\n"
-                f"• Runs in Node.js or any browser console."
-            )
-        else:
-            return (
-                f"💻 **Code Implementation**:\n\n"
-                f"```text\n"
-                f"// Mog1 AI Code Solution for: {message.strip()}\n"
-                f"```\n\n"
-                f"✨ **Usage**: Copy and run in your preferred editor or IDE."
-            )
+    messages.append({"role": "user", "content": message.strip()})
 
-    # 1. Direct Conversational Greetings & Small Talk (Only if no prior history context)
-    greetings = ["hello", "hi", "hey", "greetings", "hola", "howdy", "wassup", "what's up", "yo"]
-    if (lower_msg in greetings or any(lower_msg.startswith(g + " ") for g in greetings) or lower_msg == "how are you") and not past_context:
-        return "Hello! I am **Mog1 AI**, your PyTorch Small Language Model assistant. How can I help you today? Feel free to ask for code, math solutions, science explanations, or world facts!"
+    prompt_text = tokenizer.apply_chat_template(messages, add_generation_prompt=True)
+    input_ids = torch.tensor([tokenizer.encode(prompt_text)], dtype=torch.long, device=DEVICE)
 
-    if any(q in lower_msg for q in ["who are you", "what is your name", "who created you", "who made you", "who is your creator", "who built you"]):
-        return "I am **Mog1 AI (VSLM)**, a 3.3 Million Parameter PyTorch Small Language Model created by **Aqua-code750** & **Aquaholograph2014**!"
-
-    if any(q in lower_msg for q in ["how many parameters", "model size", "parameter count"]):
-        return "I have **3.3 Million Parameters** (~3,354,624) built with PyTorch Decoder-Only Multi-Head Self-Attention layers!"
-
-    if any(q in lower_msg for q in ["what can you do", "your features", "your capabilities"]):
-        return "I can write code (Python, JS, HTML, C++, SQL), solve math, fetch real-time weather & web search facts, execute autonomous tools, and run on BBC micro:bit hardware!"
-
-    # Detect follow-up intent (e.g. "tell me more", "explain step 1", "what about", "why is that")
-    followup_keywords = ["step", "more", "details", "explain that", "what about", "further", "elaborate", "why", "how so"]
-    is_followup = any(k in lower_msg for k in followup_keywords) and len(history) > 0
-
-    # 2. Informational, Factual & News Questions -> Fetch Real-Time Factual Knowledge
-    is_question = any(k in lower_msg for k in ["who", "what", "where", "when", "why", "how", "explain", "tell me", "discover", "invent", "capital", "news", "2026"])
-    
-    # If it's a follow-up query, append previous topic for contextual search
-    search_query = message.strip()
-    if is_followup and history:
-        last_turn = history[-1]
-        last_topic = last_turn[0] if isinstance(last_turn, (list, tuple)) else last_turn.get('content', '')
-        search_query = f"{last_topic} {message.strip()}"
-
-    if is_question or is_followup:
-        world_knowledge = fetch_universal_world_knowledge(search_query)
-        if world_knowledge:
-            return world_knowledge
-
-    # 3. Autonomous Mog1Agent Execution Engine (Tool Calling & Autonomous Routing)
-    try:
-        from mog1_agent import Mog1Agent
-        global_agent = Mog1Agent()
-        agent_res = global_agent.run(search_query)
-        if agent_res and not agent_res.startswith("🤖"):
-            return agent_res
-    except Exception:
-        pass
-
-    # 4. Generate from PyTorch Neural Network with Full Multi-Turn Context
-    if past_context:
-        formatted = f"{past_context}\nUser: {message.strip()}\nMog1:"
+    # Configure sampling parameters
+    if "Creative" in mode:
+        temp = max(temperature, 0.75)
+        tp = 0.95
+    elif "Factual" in mode:
+        temp = 0.2
+        tp = 0.7
     else:
-        formatted = f"User: {message.strip()}\nMog1:"
+        temp = temperature
+        tp = top_p
 
-    context_tokens = tokenizer.encode(formatted)
-    # Cap token window to max model sequence length (128)
-    if len(context_tokens) > 100:
-        context_tokens = context_tokens[-100:]
-    context = torch.tensor(context_tokens, dtype=torch.long, device=DEVICE).unsqueeze(0)
-
-    if "Exact" in mode:
-        temp, tk, tp = 0.2, 3, 0.85
-    elif "Creative" in mode:
-        temp, tk, tp = float(temperature), int(top_k), float(top_p)
-    else: # Smart Mode
-        temp, tk, tp = 0.4, 10, 0.90
-
-    with torch.inference_mode():
-        out = model.generate(
-            context,
-            max_new_tokens=min(45, int(max_tokens)),
+    with torch.no_grad():
+        output_ids = model.generate(
+            input_ids,
+            max_new_tokens=max_tokens,
             temperature=temp,
-            top_k=tk,
+            top_k=top_k,
             top_p=tp,
-            repetition_penalty=1.35
+            repetition_penalty=1.15,
+            stop_token_ids=[tokenizer.im_end_id, tokenizer.eos_token_id]
         )
 
-    new_token_ids = out[0][len(context_tokens):].tolist()
-    raw_res = tokenizer.decode(new_token_ids)
-    res = raw_res.split("User:")[0].split("Mog1:")[0].strip()
-    clean_res = clean_generated_text(res)
-
-    if is_coherent(clean_res):
-        return clean_res
-
-    world_knowledge = fetch_universal_world_knowledge(message)
-    if world_knowledge:
-        return world_knowledge
-
-    return f"Mog1 AI is processing: '{message.strip()}'. Feel free to ask more about science, programming, or history!"
+    generated_tokens = output_ids[0][input_ids.shape[1]:].tolist()
+    answer = tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
+    return answer
 
 def handle_oneshot_train():
     if is_auto_training():
@@ -457,7 +99,7 @@ def handle_oneshot_train():
 def handle_auto_train():
     if is_auto_training():
         return "Auto-training is already running in background!"
-    success, msg = trigger_auto_train(epochs=30)
+    success, msg = trigger_auto_train(epochs=40)
     return f"{msg} (Model will reload upon completion)."
 
 def handle_claude_train():
@@ -470,75 +112,39 @@ if __name__ == "__main__":
     try:
         import gradio as gr
 
-        with gr.Blocks(title="Mog1 AI - Instant 1-Shot Pretrain Model") as demo:
+        with gr.Blocks(title="Mog1 AI - Modernized Small Language Model") as demo:
             gr.Markdown(
                 """
-                # ⚡ Mog1 AI (VSLM) - Instant 1-Shot Pretrain Engine
-                **Mog1** features an instant 1-Shot Pretraining Engine and Claude-Level Deep Training that learns new datasets!
+                # ⚡ Mog1 AI (VSLM) - Modernized Small Language Model
+                **Mog1** is built from scratch with **RMSNorm**, **RoPE (Rotary Embeddings)**, **SwiGLU**, **KV Caching**, and **Tied Embeddings** (~6.2M parameters).
                 """
             )
-            with gr.Tab("Interactive Chat"):
+            with gr.Tab("Interactive Neural Chat"):
                 chatbot = gr.ChatInterface(
                     fn=respond,
                     additional_inputs=[
-                        gr.Radio(["🧠 X10 Deep Thinking Mode (o1 / R1 Style)", "Smart Reasoning Mode", "Free Creative Freedom Mode", "Exact Factual Mode"], label="Reasoning & Generation Mode", value="🧠 X10 Deep Thinking Mode (o1 / R1 Style)"),
-                        gr.Slider(10, 150, value=50, step=5, label="Max New Tokens"),
-                        gr.Slider(0.1, 1.5, value=0.8, step=0.05, label="Temperature (Randomness & Freedom)"),
-                        gr.Slider(0.1, 1.0, value=0.95, step=0.05, label="Top-P (Nucleus Threshold)"),
+                        gr.Radio(["Smart Reasoning Mode", "Free Creative Freedom Mode", "Exact Factual Mode"], label="Reasoning & Generation Mode", value="Smart Reasoning Mode"),
+                        gr.Slider(10, 200, value=60, step=5, label="Max New Tokens"),
+                        gr.Slider(0.1, 1.5, value=0.7, step=0.05, label="Temperature"),
+                        gr.Slider(0.1, 1.0, value=0.9, step=0.05, label="Top-P (Nucleus Threshold)"),
                         gr.Slider(1, 50, value=30, step=1, label="Top-K Candidate Window")
                     ],
                 )
 
-            with gr.Tab("Autonomous Agent & Tools"):
-                gr.Markdown("### 🛠️ Mog1 Autonomous Agent & Tool Framework")
-                gr.Markdown("Equip Mog1 AI with custom tools (`calculator`, `python_interpreter`, `web_search`, `system_info`).")
-                from mog1_agent import Mog1Agent
-                agent_instance = Mog1Agent()
-                
-                agent_input = gr.Textbox(label="Agent Prompt", placeholder="e.g. search who is Albert Einstein, run python print('Hello Agent'), or math 25*4...")
-                agent_btn = gr.Button("🚀 Run Autonomous Agent", variant="primary")
-                agent_output = gr.Markdown(label="Agent Result")
-                
-                def run_agent_wrapper(prompt):
-                    return agent_instance.run(prompt)
-                    
-                agent_btn.click(fn=run_agent_wrapper, inputs=agent_input, outputs=agent_output)
-
-            with gr.Tab("🔑 Developer API Keys"):
-                gr.Markdown("### 🔑 Mog1 AI Developer API Key Gateway")
-                gr.Markdown("Generate secure API keys to integrate Mog1 AI into your Python scripts, web apps, Discord bots, and micro:bit hardware projects!")
-                from api_manager import generate_api_key, list_api_keys
-                
+            with gr.Tab("Instant Pretrain & Management"):
+                gr.Markdown("### ⚡ Pretraining & Fine-Tuning Engine")
+                gr.Markdown("Train Mog1 AI with SFT Loss Masking and Cosine Annealing learning rate schedule:")
                 with gr.Row():
-                    key_name_input = gr.Textbox(label="App / Project Name", placeholder="e.g. My Discord Bot, Web App, micro:bit...")
-                    key_env_radio = gr.Radio(["Production (mog1_live_sk_...)", "Development (mog1_test_sk_...)"], label="Environment", value="Production (mog1_live_sk_...)")
-                
-                create_key_btn = gr.Button("✨ Generate New API Key", variant="primary")
-                key_output_md = gr.Markdown(label="Generated Key")
-                
-                def handle_create_key(name, env_choice):
-                    env = "live" if "Production" in env_choice else "test"
-                    key_data = generate_api_key(name, env)
-                    return f"### 🎉 Successfully Generated API Key:\n\n`{key_data['key']}`\n\n• **Name**: {key_data['name']}\n• **Status**: Active (120 req/min)\n• **Created**: {key_data['created_at']}\n\n*Copy and keep this key safe in your `.env` or application code!*"
-
-                create_key_btn.click(fn=handle_create_key, inputs=[key_name_input, key_env_radio], outputs=key_output_md)
-
-            with gr.Tab("Instant 1-Shot Pretrain & Management"):
-                gr.Markdown("### ⚡ Instant 1-Shot Pretraining Engine")
-                gr.Markdown("Click **1-Shot Instant Pretrain** or **Claude-Level Deep Train** to train or fine-tune Mog1 AI on the latest knowledge base!")
-                with gr.Row():
-                    oneshot_btn = gr.Button("⚡ 1-Shot Instant Pretrain (1 Sec)", variant="primary")
-                    claude_btn = gr.Button("🧠 Claude-Level Deep Train (60 Epochs)", variant="primary")
-                    train_btn = gr.Button("🔄 Standard Auto-Pretrain (30 Epochs)", variant="secondary")
+                    oneshot_btn = gr.Button("⚡ SFT Quick Train (35 Epochs)", variant="primary")
+                    claude_btn = gr.Button("🧠 Deep SFT Train (60 Epochs)", variant="primary")
+                    train_btn = gr.Button("🔄 Standard Train (40 Epochs)", variant="secondary")
                 train_status = gr.Textbox(label="Pretrain Engine Status", interactive=False)
                 oneshot_btn.click(fn=handle_oneshot_train, outputs=train_status)
                 claude_btn.click(fn=handle_claude_train, outputs=train_status)
                 train_btn.click(fn=handle_auto_train, outputs=train_status)
 
         # Determine port for deployment (Render provides PORT env var)
-        import os
         port = int(os.getenv("PORT", 7860))
-        # Launch Gradio without share link (Render serves the app directly)
         demo.launch(server_name="0.0.0.0", server_port=port, share=False, theme=gr.themes.Soft())
     except ImportError:
         print("Gradio not installed. Run `pip install gradio` to launch Web UI.")

@@ -1,170 +1,206 @@
 import os
 import sys
+import math
+import json
 import time
+from typing import Tuple, Dict, Any, List
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
+
 from model import Mog1, Mog1Config
-from dataset import SubwordTokenizer, TextDataset
+from dataset import SubwordTokenizer, InstructionSFTDataset, PretrainTextDataset
+from data_builder import INSTRUCTION_DATA, generate_datasets
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
-DEFAULT_KNOWLEDGE_PATH = "knowledge_base.txt"
+def build_tokenizer_from_instructions(instruction_data: List[Dict[str, str]], vocab_limit: int = 2048) -> SubwordTokenizer:
+    full_text = ""
+    for item in instruction_data:
+        full_text += f"{item.get('instruction', '')}\n{item.get('response', '')}\n"
+    tokenizer = SubwordTokenizer(text_corpus=full_text, vocab_limit=vocab_limit)
+    return tokenizer
 
-def one_shot_train(
-    data_path: str = DEFAULT_KNOWLEDGE_PATH,
+
+def configure_optimizers(model: Mog1, lr: float = 1e-3, weight_decay: float = 0.1, betas: Tuple[float, float] = (0.9, 0.95)) -> torch.optim.Optimizer:
+    """
+    Separates parameters into decay (2D weight matrices) and no-decay (1D norms and biases).
+    """
+    decay_params = []
+    no_decay_params = []
+
+    for name, param in model.named_parameters():
+        if not param.requires_grad:
+            continue
+        if param.dim() >= 2:
+            decay_params.append(param)
+        else:
+            no_decay_params.append(param)
+
+    optim_groups = [
+        {"params": decay_params, "weight_decay": weight_decay},
+        {"params": no_decay_params, "weight_decay": 0.0},
+    ]
+
+    optimizer = torch.optim.AdamW(optim_groups, lr=lr, betas=betas, eps=1e-8)
+    return optimizer
+
+
+def get_lr_schedule(step: int, warmup_steps: int, max_steps: int, max_lr: float, min_lr: float) -> float:
+    """Linear warmup followed by Cosine Annealing decay."""
+    if step < warmup_steps:
+        return max_lr * (step + 1) / (warmup_steps + 1)
+    if step > max_steps:
+        return min_lr
+    decay_ratio = (step - warmup_steps) / max(1, (max_steps - warmup_steps))
+    coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
+    return min_lr + coeff * (max_lr - min_lr)
+
+
+@torch.no_grad()
+def evaluate_loss(model: Mog1, dataloader: DataLoader, device: str) -> Tuple[float, float]:
+    """Computes cross entropy loss and perplexity on evaluation dataloader."""
+    model.eval()
+    total_loss = 0.0
+    total_tokens = 0
+
+    for x, y in dataloader:
+        x, y = x.to(device), y.to(device)
+        _, loss, _ = model(x, targets=y)
+        # Count non-masked tokens (target != -100)
+        non_masked = (y != -100).sum().item()
+        if non_masked > 0:
+            total_loss += loss.item() * non_masked
+            total_tokens += non_masked
+
+    avg_loss = total_loss / max(1, total_tokens) if total_tokens > 0 else float('inf')
+    perplexity = math.exp(min(avg_loss, 20.0))  # Prevent numerical overflow
+    return avg_loss, perplexity
+
+
+def train_instruction_model(
+    train_data_path: str = "data/train_instructions.json",
+    val_data_path: str = "data/val_instructions.json",
+    epochs: int = 50,
+    batch_size: int = 8,
+    max_lr: float = 1.2e-3,
+    min_lr: float = 1e-4,
+    block_size: int = 256,
     save_path: str = "vslm_checkpoint.pt"
-):
+) -> Dict[str, Any]:
     start_time = time.time()
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"⚡ Launching 1-Shot Instant Pretraining Engine on {device}...", flush=True)
+    print(f"🚀 Starting Mog1 Instruction Model Training on {device}...", flush=True)
 
-    if data_path and os.path.exists(data_path):
-        with open(data_path, "r", encoding="utf-8") as f:
-            text = f.read()
-    else:
-        text = "User: Hello\nMog1: I am Mog1 AI model."
+    # Ensure dataset files exist
+    if not os.path.exists(train_data_path) or not os.path.exists(val_data_path):
+        train_data_path, val_data_path = generate_datasets()
 
-    text_corpus = text * 3 if len(text) < 50000 else text
+    with open(train_data_path, "r", encoding="utf-8") as f:
+        train_samples = json.load(f)
+    with open(val_data_path, "r", encoding="utf-8") as f:
+        val_samples = json.load(f)
 
-    tokenizer = SubwordTokenizer(text_corpus=text_corpus)
-    encoded_tokens = tokenizer.encode(text_corpus)
-    encoded = torch.tensor(encoded_tokens, dtype=torch.long)
+    # Build tokenizer on combined corpus
+    all_samples = train_samples + val_samples
+    tokenizer = build_tokenizer_from_instructions(all_samples, vocab_limit=2048)
 
-    block_size = 64
-    dataset = TextDataset(encoded, block_size=block_size)
-    dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
+    # Create SFT datasets with target loss masking
+    train_dataset = InstructionSFTDataset(train_samples, tokenizer, block_size=block_size)
+    val_dataset = InstructionSFTDataset(val_samples, tokenizer, block_size=block_size)
 
-    config = Mog1Config(
-        vocab_size=tokenizer.vocab_size,
-        n_embd=256,
-        n_head=8,
-        n_layer=4,
-        block_size=block_size,
-        dropout=0.0
-    )
-    model = Mog1(config).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-2, weight_decay=1e-4)
-
-    model.train()
-    # 3 High-Speed One-Shot Epochs
-    for epoch in range(1, 4):
-        total_loss = 0.0
-        steps = 0
-        for x, y in dataloader:
-            x, y = x.to(device), y.to(device)
-            optimizer.zero_grad()
-            logits, loss = model(x, y)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-            steps += 1
-        avg_loss = total_loss / max(steps, 1)
-
-    checkpoint = {
-        'model_state_dict': model.state_dict(),
-        'config': config,
-        'use_tiktoken': getattr(tokenizer, 'use_tiktoken', False),
-        'stoi': getattr(tokenizer, 'stoi', None),
-        'itos': getattr(tokenizer, 'itos', None),
-    }
-    torch.save(checkpoint, save_path)
-    torch.save(checkpoint, "vslm_checkpoint.pt")
-    elapsed = time.time() - start_time
-    print(f"⚡ 1-Shot Instant Pretraining Completed in {elapsed:.2f}s! Final Loss: {avg_loss:.4f}", flush=True)
-    return avg_loss, elapsed
-
-def train_mog1(
-    data_path: str = DEFAULT_KNOWLEDGE_PATH,
-    epochs: int = 60,
-    batch_size: int = 32,
-    lr: float = 2.5e-3,
-    save_path: str = "mog1_checkpoint.pt",
-    target_loss: float = 0.04
-):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"Training Mog1 Smart AI Model on device: {device}", flush=True)
-
-    if data_path and os.path.exists(data_path):
-        with open(data_path, "r", encoding="utf-8") as f:
-            text = f.read()
-        print(f"Loaded knowledge base from '{data_path}'. Size: {len(text)} characters.", flush=True)
-    else:
-        text = "User: Hello\nMog1: I am Mog1 AI model."
-
-    if len(text) < 50000:
-        text_corpus = text * 5
-    else:
-        text_corpus = text
-
-    tokenizer = SubwordTokenizer(text_corpus=text_corpus)
-    encoded_tokens = tokenizer.encode(text_corpus)
-    encoded = torch.tensor(encoded_tokens, dtype=torch.long)
-
-    print(f"Knowledge Base Tokens: {len(encoded)}. Vocab size: {tokenizer.vocab_size}", flush=True)
-
-    block_size = 64
-    dataset = TextDataset(encoded, block_size=block_size)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
     config = Mog1Config(
         vocab_size=tokenizer.vocab_size,
-        n_embd=256,
-        n_head=8,
-        n_layer=4,
+        n_embd=288,
+        n_head=6,
+        n_layer=6,
+        d_ffn=768,
         block_size=block_size,
-        dropout=0.05
+        dropout=0.05,
+        tie_weights=True
     )
+
     model = Mog1(config).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=1e-4)
+    optimizer = configure_optimizers(model, lr=max_lr, weight_decay=0.1)
 
-    param_count = sum(p.numel() for p in model.parameters())
-    print(f"Mog1 Smart Architecture initialized with {param_count:,} parameters.", flush=True)
-    model.train()
+    total_steps = len(train_loader) * epochs
+    warmup_steps = max(5, int(total_steps * 0.1))
 
-    avg_loss = float('inf')
+    print(f"Model Parameters: {model.get_num_params():,} | Vocab Size: {tokenizer.vocab_size} | Total Steps: {total_steps}", flush=True)
 
+    best_val_loss = float('inf')
+    best_checkpoint = None
+
+    global_step = 0
     for epoch in range(1, epochs + 1):
-        total_loss = 0.0
-        steps = 0
-        for x, y in dataloader:
+        model.train()
+        epoch_loss = 0.0
+        steps_in_epoch = 0
+
+        for x, y in train_loader:
             x, y = x.to(device), y.to(device)
 
+            # Update learning rate with warmup + cosine decay
+            lr = get_lr_schedule(global_step, warmup_steps, total_steps, max_lr, min_lr)
+            for param_group in optimizer.param_groups:
+                param_group["lr"] = lr
+
             optimizer.zero_grad()
-            logits, loss = model(x, y)
+            _, loss, _ = model(x, targets=y)
             loss.backward()
+
+            # Gradient clipping
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
 
-            total_loss += loss.item()
-            steps += 1
+            epoch_loss += loss.item()
+            steps_in_epoch += 1
+            global_step += 1
 
-        scheduler.step()
-        avg_loss = total_loss / steps if steps > 0 else 0.0
+        avg_train_loss = epoch_loss / max(1, steps_in_epoch)
 
-        if epoch % 10 == 0 or epoch == 1 or epoch == epochs or avg_loss <= target_loss:
-            print(f"Epoch {epoch:02d}/{epochs} - Loss: {avg_loss:.4f}", flush=True)
+        # Evaluate on validation set
+        if epoch % 5 == 0 or epoch == 1 or epoch == epochs:
+            val_loss, val_ppl = evaluate_loss(model, val_loader, device)
+            print(f"Epoch {epoch:02d}/{epochs} | Train Loss: {avg_train_loss:.4f} | Val Loss: {val_loss:.4f} | Val PPL: {val_ppl:.2f} | LR: {lr:.6f}", flush=True)
 
-        if avg_loss <= target_loss and epoch >= 20:
-            print(f"Target loss <= {target_loss} achieved at epoch {epoch}.", flush=True)
-            break
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
 
-    checkpoint = {
-        'model_state_dict': model.state_dict(),
-        'config': config,
-        'use_tiktoken': getattr(tokenizer, 'use_tiktoken', False),
-        'stoi': getattr(tokenizer, 'stoi', None),
-        'itos': getattr(tokenizer, 'itos', None),
+        # Save current checkpoint
+        checkpoint = {
+            "model_state_dict": model.state_dict(),
+            "config": config,
+            "stoi": tokenizer.stoi,
+            "itos": tokenizer.itos,
+            "train_loss": avg_train_loss,
+            "val_loss": val_loss,
+            "val_ppl": val_ppl,
+            "epoch": epoch,
+            "timestamp": time.time()
+        }
+        torch.save(checkpoint, save_path)
+
+    elapsed = time.time() - start_time
+    print(f"\n✅ Training Complete in {elapsed:.2f}s! Best Validation Loss: {best_val_loss:.4f}", flush=True)
+    return {
+        "best_val_loss": best_val_loss,
+        "elapsed_time": elapsed,
+        "epochs": epochs,
+        "save_path": save_path
     }
-    torch.save(checkpoint, save_path)
-    torch.save(checkpoint, "vslm_checkpoint.pt")
-    print(f"Mog1 Smart AI Model saved to '{save_path}' & 'vslm_checkpoint.pt' (Final Loss: {avg_loss:.4f}).", flush=True)
-    return avg_loss
+
+
+def one_shot_train(save_path: str = "vslm_checkpoint.pt"):
+    """Quick high-speed training run for instant pretraining."""
+    return train_instruction_model(epochs=35, batch_size=8, save_path=save_path)
+
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1].lower() == "oneshot":
-        one_shot_train()
-    else:
-        epochs = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 60
-        train_mog1(epochs=epochs)
+    epochs = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 45
+    train_instruction_model(epochs=epochs)

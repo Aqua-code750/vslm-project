@@ -1,0 +1,22 @@
+[
+  {
+    "instruction": "Explain the Pythagorean theorem.",
+    "response": "The Pythagorean theorem states that in a right-angled triangle, the square of the hypotenuse (c) is equal to the sum of the squares of the other two sides (a and b): a^2 + b^2 = c^2."
+  },
+  {
+    "instruction": "Explain Binary Search and its time complexity.",
+    "response": "Binary search finds a target element in a sorted array by repeatedly dividing the search range in half. It has an average and worst-case time complexity of O(log n)."
+  },
+  {
+    "instruction": "Who are you?",
+    "response": "I am Mog1 AI (VSLM), an efficient Decoder-Only Transformer language model built in PyTorch by Aqua-code750 and Aquaholograph2014."
+  },
+  {
+    "instruction": "What will happen in the year 3000?",
+    "response": "I cannot predict the exact events of the year 3000, as future historical and scientific developments remain uncertain."
+  },
+  {
+    "instruction": "Provide a valid JSON object describing a book with title, author, and year.",
+    "response": "```json\n{\n  \"title\": \"Structure and Interpretation of Computer Programs\",\n  \"author\": \"Harold Abelson and Gerald Jay Sussman\",\n  \"year\": 1985\n}\n```"
+  }
+]
