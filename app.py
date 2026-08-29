@@ -12,6 +12,8 @@ from auto_train import trigger_auto_train, is_auto_training
 
 # Set encoding for Windows terminal
 if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 BEST_CHECKPOINT_PATH = "vslm_checkpoint_best.pt"
 DEFAULT_CHECKPOINT_PATH = "vslm_checkpoint.pt"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
