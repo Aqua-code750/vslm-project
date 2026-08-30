@@ -156,19 +156,20 @@ def augment_instructions(base_data):
 
     return augmented
 
-def generate_datasets(save_dir: str = "data", train_ratio: float = 0.85):
+def generate_datasets(save_dir: str = "data"):
     os.makedirs(save_dir, exist_ok=True)
     
-    # Expand with augmentation
-    all_data = augment_instructions(BASE_INSTRUCTIONS)
+    # 1. Guarantee ALL core base instructions are in the training set
+    train_set = list(BASE_INSTRUCTIONS)
     
-    # Shuffle with deterministic seed for reproducible splits
+    # 2. Add augmented paraphrases
+    augmented_variants = augment_instructions(BASE_INSTRUCTIONS)
+    
     random.seed(42)
-    random.shuffle(all_data)
+    random.shuffle(augmented_variants)
     
-    split_idx = int(len(all_data) * train_ratio)
-    train_set = all_data[:split_idx]
-    val_set = all_data[split_idx:]
+    val_set = augmented_variants[:18]
+    train_set.extend(augmented_variants[18:])
     
     train_file = os.path.join(save_dir, "train_instructions.json")
     val_file = os.path.join(save_dir, "val_instructions.json")
@@ -184,3 +185,4 @@ def generate_datasets(save_dir: str = "data", train_ratio: float = 0.85):
 
 if __name__ == "__main__":
     generate_datasets()
+
