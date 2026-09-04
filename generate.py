@@ -68,7 +68,7 @@ def generate_text(
     model, tokenizer, device = get_loaded_model_and_tokenizer(checkpoint_path)
 
     messages = [
-        {"role": "system", "content": "You are Mog1 AI, a helpful, coherent, and precise conversational AI assistant."}
+        {"role": "system", "content": "You are Mog1 AI, a helpful and coherent conversational assistant."}
     ]
 
     if history:
@@ -82,11 +82,11 @@ def generate_text(
 
     # Configure optimal sampling modes
     if mode == "exact":
-        temp, tk, tp = 0.0, 1, 1.0
+        temp, tk, tp, rep_pen = 0.0, 1, 1.0, 1.0
     elif mode == "smart":
-        temp, tk, tp = 0.0, 1, 1.0
+        temp, tk, tp, rep_pen = 0.0, 1, 1.0, 1.0
     else:  # "free"
-        temp, tk, tp = max(temperature, 0.3), min(top_k, 5), top_p
+        temp, tk, tp, rep_pen = max(temperature, 0.3), min(top_k, 5), top_p, 1.1
 
     with torch.no_grad():
         output_ids = model.generate(
@@ -95,12 +95,23 @@ def generate_text(
             temperature=temp,
             top_k=tk,
             top_p=tp,
-            repetition_penalty=1.15,
+            repetition_penalty=rep_pen,
             stop_token_ids=[tokenizer.im_end_id, tokenizer.eos_token_id]
         )
 
     new_tokens = output_ids[0][input_ids.shape[1]:].tolist()
-    response = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+    # If an end token was generated in sequence, truncate there
+    for stop_id in [tokenizer.im_end_id, tokenizer.eos_token_id]:
+        if stop_id in new_tokens:
+            new_tokens = new_tokens[:new_tokens.index(stop_id)]
+
+    raw_response = tokenizer.decode(new_tokens, skip_special_tokens=False)
+    # Split on any chat markers if present
+    for marker in ["<|im_end|>", "<|im_start|>", "<|eos|>"]:
+        if marker in raw_response:
+            raw_response = raw_response.split(marker)[0]
+
+    response = raw_response.strip()
     return response
 
 if __name__ == "__main__":

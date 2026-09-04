@@ -125,7 +125,7 @@ class InstructionSFTDataset(Dataset):
 
     def _process_samples(self):
         for sample in self.samples:
-            system_prompt = sample.get("system", "You are Mog1 AI, a helpful, coherent, and precise conversational AI assistant.")
+            system_prompt = sample.get("system", "You are Mog1 AI, a helpful and coherent conversational assistant.")
             user_msg = sample["instruction"]
             assistant_msg = sample["response"]
 

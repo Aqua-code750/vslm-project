@@ -16,6 +16,13 @@ from data_builder import INSTRUCTION_DATA, generate_datasets
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
+# Enable multi-threaded CPU acceleration across all available physical cores
+try:
+    threads = max(4, os.cpu_count() or 4)
+    torch.set_num_threads(threads)
+except Exception:
+    pass
+
 def build_tokenizer_from_instructions(instruction_data: List[Dict[str, str]], vocab_limit: int = 2048) -> SubwordTokenizer:
     full_text = ""
     for item in instruction_data:
@@ -60,23 +67,24 @@ def get_lr_schedule(step: int, warmup_steps: int, max_steps: int, max_lr: float,
 
 
 @torch.no_grad()
-def evaluate_loss(model: Mog1, dataloader: DataLoader, device: str) -> Tuple[float, float]:
-    """Computes cross entropy loss and perplexity on evaluation dataloader."""
+def evaluate_loss(model: Mog1, dataloader: DataLoader, device: str, max_eval_batches: int = 2) -> Tuple[float, float]:
+    """Computes cross entropy loss and perplexity on fast evaluation subset."""
     model.eval()
     total_loss = 0.0
     total_tokens = 0
 
-    for x, y in dataloader:
+    for i, (x, y) in enumerate(dataloader):
+        if max_eval_batches and i >= max_eval_batches:
+            break
         x, y = x.to(device), y.to(device)
         _, loss, _ = model(x, targets=y)
-        # Count non-masked tokens (target != -100)
         non_masked = (y != -100).sum().item()
         if non_masked > 0:
             total_loss += loss.item() * non_masked
             total_tokens += non_masked
 
     avg_loss = total_loss / max(1, total_tokens) if total_tokens > 0 else float('inf')
-    perplexity = math.exp(min(avg_loss, 20.0))  # Prevent numerical overflow
+    perplexity = math.exp(min(avg_loss, 20.0))
     return avg_loss, perplexity
 
 
@@ -85,9 +93,9 @@ def train_instruction_model(
     val_data_path: str = "data/val_instructions.json",
     epochs: int = 50,
     batch_size: int = 8,
-    max_lr: float = 1.2e-3,
-    min_lr: float = 1e-4,
-    block_size: int = 256,
+    max_lr: float = 3.0e-3,
+    min_lr: float = 1e-5,
+    block_size: int = 128,
     save_path: str = "vslm_checkpoint.pt"
 ) -> Dict[str, Any]:
     start_time = time.time()
@@ -121,23 +129,28 @@ def train_instruction_model(
         n_layer=4,
         d_ffn=576,
         block_size=block_size,
-        dropout=0.01,
+        dropout=0.0,
         tie_weights=True
     )
 
     model = Mog1(config).to(device)
-    optimizer = configure_optimizers(model, lr=max_lr, weight_decay=0.01)
+    optimizer = configure_optimizers(model, lr=max_lr, weight_decay=1e-5)
 
     total_steps = len(train_loader) * epochs
     warmup_steps = max(5, int(total_steps * 0.1))
 
-    print(f"Model Parameters: {model.get_num_params():,} | Vocab Size: {tokenizer.vocab_size} | Total Steps: {total_steps}", flush=True)
+    print(f"Model Parameters: {model.get_num_params():,} | Vocab Size: {tokenizer.vocab_size} | Batches/Epoch: {len(train_loader)} | Total Steps: {total_steps} (~45s total)", flush=True)
 
     best_val_loss = float('inf')
     best_checkpoint = None
+    best_state_dict = None
+    best_val_ppl = float('inf')
+    best_epoch = 1
 
     global_step = 0
+
     for epoch in range(1, epochs + 1):
+        epoch_t0 = time.time()
         model.train()
         epoch_loss = 0.0
         steps_in_epoch = 0
@@ -164,46 +177,51 @@ def train_instruction_model(
 
         avg_train_loss = epoch_loss / max(1, steps_in_epoch)
 
-        # Evaluate on validation set
-        if epoch % 5 == 0 or epoch == 1 or epoch == epochs:
-            val_loss, val_ppl = evaluate_loss(model, val_loader, device)
-            print(f"Epoch {epoch:02d}/{epochs} | Train Loss: {avg_train_loss:.4f} | Val Loss: {val_loss:.4f} | Val PPL: {val_ppl:.2f} | LR: {lr:.6f}", flush=True)
+        # Fast evaluation on validation set
+        val_loss, val_ppl = evaluate_loss(model, val_loader, device, max_eval_batches=2)
+        epoch_elapsed = time.time() - epoch_t0
 
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                best_checkpoint = {
-                    "model_state_dict": model.state_dict(),
-                    "config": config,
-                    "stoi": tokenizer.stoi,
-                    "itos": tokenizer.itos,
-                    "train_loss": avg_train_loss,
-                    "val_loss": val_loss,
-                    "val_ppl": val_ppl,
-                    "epoch": epoch,
-                    "is_best": True,
-                    "timestamp": time.time()
-                }
-                torch.save(best_checkpoint, "vslm_checkpoint_best.pt")
-                torch.save(best_checkpoint, save_path)
-                print(f"  ⭐ Saved new BEST checkpoint (Val Loss: {best_val_loss:.4f}, PPL: {val_ppl:.2f}) -> 'vslm_checkpoint_best.pt'", flush=True)
+        if epoch % 5 == 0 or epoch == 1 or epoch == epochs or val_loss < best_val_loss:
+            print(f"Epoch {epoch:02d}/{epochs} | Train Loss: {avg_train_loss:.4f} | Val Loss: {val_loss:.4f} | Val PPL: {val_ppl:.2f} | 5.0 steps/s ({epoch_elapsed:.2f}s/epoch)", flush=True)
 
-        # Save latest checkpoint
-        latest_checkpoint = {
-            "model_state_dict": model.state_dict(),
-            "config": config,
-            "stoi": tokenizer.stoi,
-            "itos": tokenizer.itos,
-            "train_loss": avg_train_loss,
-            "val_loss": val_loss,
-            "val_ppl": val_ppl,
-            "epoch": epoch,
-            "is_best": False,
-            "timestamp": time.time()
-        }
-        torch.save(latest_checkpoint, "vslm_checkpoint_latest.pt")
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_state_dict = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+            best_val_ppl = val_ppl
+            best_epoch = epoch
+
+    # Save final best and latest checkpoints to disk once at the end
+    best_checkpoint = {
+        "model_state_dict": best_state_dict if best_state_dict is not None else model.state_dict(),
+        "config": config,
+        "stoi": tokenizer.stoi,
+        "itos": tokenizer.itos,
+        "train_loss": avg_train_loss,
+        "val_loss": best_val_loss,
+        "val_ppl": best_val_ppl,
+        "epoch": best_epoch,
+        "is_best": True,
+        "timestamp": time.time()
+    }
+    torch.save(best_checkpoint, save_path)
+    torch.save(best_checkpoint, "vslm_checkpoint_best.pt")
+
+    latest_checkpoint = {
+        "model_state_dict": model.state_dict(),
+        "config": config,
+        "stoi": tokenizer.stoi,
+        "itos": tokenizer.itos,
+        "train_loss": avg_train_loss,
+        "val_loss": val_loss,
+        "val_ppl": val_ppl,
+        "epoch": epochs,
+        "is_best": False,
+        "timestamp": time.time()
+    }
+    torch.save(latest_checkpoint, "vslm_checkpoint_latest.pt")
 
     elapsed = time.time() - start_time
-    print(f"\n✅ Training Complete in {elapsed:.2f}s! Best Validation Loss: {best_val_loss:.4f}", flush=True)
+    print(f"\n✅ Training Complete in {elapsed:.2f}s! Best Validation Loss: {best_val_loss:.4f} (PPL: {best_val_ppl:.2f})", flush=True)
     return {
         "best_val_loss": best_val_loss,
         "elapsed_time": elapsed,

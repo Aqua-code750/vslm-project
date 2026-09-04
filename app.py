@@ -48,15 +48,16 @@ def load_or_train_model():
 
 model, tokenizer = load_or_train_model()
 
-def respond(message: str, history, mode: str, max_tokens: int, temperature: float, top_p: float, top_k: int) -> str:
+def respond_stream(message: str, history, mode: str, max_tokens: int, temperature: float, top_p: float, top_k: int):
     """
-    Pure Neural Autoregressive Generation using Mog1 Transformer, RoPE, RMSNorm, SwiGLU, and ChatML formatting.
+    Real-time streaming autoregressive token generator for instant UI typing.
     """
     if not message or not message.strip():
-        return ""
+        yield ""
+        return
 
     messages = [
-        {"role": "system", "content": "You are Mog1 AI, a helpful, coherent, and precise conversational AI assistant."}
+        {"role": "system", "content": "You are Mog1 AI, a helpful and coherent conversational assistant."}
     ]
 
     # Format multi-turn conversation history
@@ -75,33 +76,42 @@ def respond(message: str, history, mode: str, max_tokens: int, temperature: floa
     input_ids = torch.tensor([tokenizer.encode(prompt_text)], dtype=torch.long, device=DEVICE)
 
     # Configure sampling parameters
-    if "Creative" in mode:
+    if "Creative" in mode or "Free" in mode:
         temp = max(temperature, 0.4)
-        tp = 0.90
+        tp = min(top_p, 0.90)
         tk = max(top_k, 5)
-    elif "Factual" in mode:
+        rep_pen = 1.1
+    elif "Factual" in mode or "Exact" in mode:
         temp = 0.0
         tp = 1.0
         tk = 1
+        rep_pen = 1.0
     else:  # Smart Reasoning Mode (Default)
         temp = 0.0
         tp = 1.0
         tk = 1
+        rep_pen = 1.0
 
-    with torch.no_grad():
-        output_ids = model.generate(
-            input_ids,
-            max_new_tokens=max_tokens,
-            temperature=temp,
-            top_k=top_k,
-            top_p=tp,
-            repetition_penalty=1.15,
-            stop_token_ids=[tokenizer.im_end_id, tokenizer.eos_token_id]
-        )
+    accumulated_tokens = []
+    stop_ids = {tokenizer.im_end_id, tokenizer.eos_token_id}
 
-    generated_tokens = output_ids[0][input_ids.shape[1]:].tolist()
-    answer = tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
-    return answer
+    for token_id in model.generate_stream(
+        input_ids,
+        max_new_tokens=max_tokens,
+        temperature=temp,
+        top_k=tk,
+        top_p=tp,
+        repetition_penalty=rep_pen,
+        stop_token_ids=list(stop_ids)
+    ):
+        if token_id in stop_ids:
+            break
+        accumulated_tokens.append(token_id)
+        raw_text = tokenizer.decode(accumulated_tokens, skip_special_tokens=False)
+        for marker in ["<|im_end|>", "<|im_start|>", "<|eos|>"]:
+            if marker in raw_text:
+                raw_text = raw_text.split(marker)[0]
+        yield raw_text.strip()
 
 def handle_oneshot_train():
     if is_auto_training():
@@ -129,20 +139,45 @@ if __name__ == "__main__":
             gr.Markdown(
                 """
                 # ⚡ Mog1 AI (VSLM) - Modernized Small Language Model
-                **Mog1** is built from scratch with **RMSNorm**, **RoPE (Rotary Embeddings)**, **SwiGLU**, **KV Caching**, and **Tied Embeddings** (~6.2M parameters).
+                **Mog1** is built from scratch with **RMSNorm**, **RoPE (Rotary Embeddings)**, **SwiGLU**, **KV Caching**, and **Tied Embeddings**.
                 """
             )
             with gr.Tab("Interactive Neural Chat"):
-                chatbot = gr.ChatInterface(
-                    fn=respond,
-                    additional_inputs=[
-                        gr.Radio(["Smart Reasoning Mode", "Free Creative Freedom Mode", "Exact Factual Mode"], label="Reasoning & Generation Mode", value="Smart Reasoning Mode"),
-                        gr.Slider(10, 256, value=160, step=5, label="Max New Tokens"),
-                        gr.Slider(0.1, 1.5, value=0.2, step=0.05, label="Temperature"),
-                        gr.Slider(0.1, 1.0, value=0.85, step=0.05, label="Top-P (Nucleus Threshold)"),
-                        gr.Slider(1, 50, value=5, step=1, label="Top-K Candidate Window")
-                    ],
+                chatbot = gr.Chatbot(label="Mog1 Conversation", height=420)
+                with gr.Row():
+                    msg_input = gr.Textbox(placeholder="Ask Mog1 anything (e.g. 'Hey bro!', 'Who are you?', 'Explain Big O notation')...", scale=8, show_label=False)
+                    send_btn = gr.Button("Send 🚀", scale=2, variant="primary")
+
+                with gr.Accordion("⚙️ Generation Settings", open=False):
+                    mode_radio = gr.Radio(["Smart Reasoning Mode", "Free Creative Freedom Mode", "Exact Factual Mode"], label="Reasoning & Generation Mode", value="Smart Reasoning Mode")
+                    max_tok_slider = gr.Slider(10, 160, value=64, step=5, label="Max New Tokens")
+                    temp_slider = gr.Slider(0.0, 1.5, value=0.0, step=0.05, label="Temperature")
+                    top_p_slider = gr.Slider(0.1, 1.0, value=1.0, step=0.05, label="Top-P (Nucleus Threshold)")
+                    top_k_slider = gr.Slider(1, 50, value=1, step=1, label="Top-K Candidate Window")
+                    clear_btn = gr.Button("🗑️ Clear Chat History")
+
+                def user_turn(user_msg, chat_hist):
+                    if not user_msg or not user_msg.strip():
+                        return "", chat_hist or []
+                    chat_hist = chat_hist or []
+                    return "", chat_hist + [[user_msg, ""]]
+
+                def bot_turn(chat_hist, mode, max_tokens, temperature, top_p, top_k):
+                    if not chat_hist:
+                        return
+                    user_msg = chat_hist[-1][0]
+                    history_prior = chat_hist[:-1]
+                    for partial_res in respond_stream(user_msg, history_prior, mode, max_tokens, temperature, top_p, top_k):
+                        chat_hist[-1][1] = partial_res
+                        yield chat_hist
+
+                msg_input.submit(user_turn, [msg_input, chatbot], [msg_input, chatbot]).then(
+                    bot_turn, [chatbot, mode_radio, max_tok_slider, temp_slider, top_p_slider, top_k_slider], [chatbot]
                 )
+                send_btn.click(user_turn, [msg_input, chatbot], [msg_input, chatbot]).then(
+                    bot_turn, [chatbot, mode_radio, max_tok_slider, temp_slider, top_p_slider, top_k_slider], [chatbot]
+                )
+                clear_btn.click(lambda: [], outputs=[chatbot])
 
             with gr.Tab("Instant Pretrain & Management"):
                 gr.Markdown("### ⚡ Pretraining & Fine-Tuning Engine")
@@ -156,8 +191,12 @@ if __name__ == "__main__":
                 claude_btn.click(fn=handle_claude_train, outputs=train_status)
                 train_btn.click(fn=handle_auto_train, outputs=train_status)
 
-        # Determine port for deployment (Render provides PORT env var)
+        # Determine port for deployment with automatic fallback if occupied
         port = int(os.getenv("PORT", 7860))
-        demo.launch(server_name="0.0.0.0", server_port=port, share=False, theme=gr.themes.Soft())
+        try:
+            demo.launch(server_name="0.0.0.0", server_port=port, share=False, theme=gr.themes.Soft())
+        except OSError:
+            print(f"⚠️ Port {port} is occupied. Automatically searching for next available open port...", flush=True)
+            demo.launch(server_name="0.0.0.0", server_port=None, share=False, theme=gr.themes.Soft())
     except ImportError:
         print("Gradio not installed. Run `pip install gradio` to launch Web UI.")

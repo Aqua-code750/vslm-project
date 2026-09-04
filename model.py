@@ -77,6 +77,12 @@ def apply_rope(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor, offset: in
     x shape: [batch_size, n_heads, seq_len, head_dim]
     """
     B, H, T, D = x.shape
+    if offset + T > cos.shape[0]:
+        # Dynamically extend RoPE frequencies if sequence length exceeds precomputed buffer
+        new_cos, new_sin = precompute_rope_freqs(D, max_seq_len=max(offset + T + 512, 2048))
+        cos = new_cos.to(x.device, x.dtype)
+        sin = new_sin.to(x.device, x.dtype)
+
     cos_slice = cos[offset:offset + T, :].unsqueeze(0).unsqueeze(1).to(x.device, x.dtype)
     sin_slice = sin[offset:offset + T, :].unsqueeze(0).unsqueeze(1).to(x.device, x.dtype)
 
@@ -211,7 +217,7 @@ class Mog1(nn.Module):
             self.lm_head.weight = self.tok_embeddings.weight
 
         # Precompute RoPE frequencies
-        cos, sin = precompute_rope_freqs(config.head_dim, config.block_size * 2, theta=config.rope_theta)
+        cos, sin = precompute_rope_freqs(config.head_dim, max(2048, config.block_size * 4), theta=config.rope_theta)
         self.register_buffer("rope_cos", cos, persistent=False)
         self.register_buffer("rope_sin", sin, persistent=False)
 
@@ -258,8 +264,7 @@ class Mog1(nn.Module):
             loss = F.cross_entropy(
                 logits.view(-1, logits.size(-1)),
                 targets.view(-1),
-                ignore_index=-100,
-                label_smoothing=0.08 if self.training else 0.0
+                ignore_index=-100
             )
 
         return logits, loss, new_kv_caches
@@ -335,3 +340,66 @@ class Mog1(nn.Module):
             next_token_logits = logits[:, -1, :]
 
         return generated
+
+    @torch.inference_mode()
+    def generate_stream(
+        self,
+        idx: torch.Tensor,
+        max_new_tokens: int = 64,
+        temperature: float = 0.0,
+        top_k: Optional[int] = 1,
+        top_p: Optional[float] = 1.0,
+        repetition_penalty: float = 1.0,
+        stop_token_ids: Optional[List[int]] = None
+    ):
+        """
+        Fast token-by-token streaming generator for real-time UI typing.
+        """
+        self.eval()
+        B, T = idx.shape
+        generated = idx.clone()
+
+        logits, _, kv_caches = self(idx[:, -self.config.block_size:], use_cache=True)
+        next_token_logits = logits[:, -1, :]
+
+        for _ in range(max_new_tokens):
+            logits = next_token_logits
+
+            if repetition_penalty != 1.0:
+                for b in range(B):
+                    recent_gen = generated[b, T:].tolist()[-30:]
+                    for prev_tok in set(recent_gen):
+                        if logits[b, prev_tok] < 0:
+                            logits[b, prev_tok] *= repetition_penalty
+                        else:
+                            logits[b, prev_tok] /= repetition_penalty
+
+            if temperature <= 0.05:
+                next_token = torch.argmax(logits, dim=-1, keepdim=True)
+            else:
+                logits = logits / temperature
+                if top_k is not None and top_k > 0:
+                    v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+                    logits[logits < v[:, [-1]]] = -float('Inf')
+                if top_p is not None and top_p < 1.0:
+                    sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+                    cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+                    sorted_indices_to_remove = cumulative_probs > top_p
+                    sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+                    sorted_indices_to_remove[..., 0] = 0
+                    for b in range(B):
+                        indices_to_remove = sorted_indices[b, sorted_indices_to_remove[b]]
+                        logits[b, indices_to_remove] = -float('Inf')
+
+                probs = F.softmax(logits, dim=-1)
+                next_token = torch.multinomial(probs, num_samples=1)
+
+            tok_id = next_token.item()
+            if stop_token_ids and tok_id in stop_token_ids:
+                break
+
+            yield tok_id
+
+            generated = torch.cat([generated, next_token], dim=1)
+            logits, _, kv_caches = self(next_token, kv_caches=kv_caches, use_cache=True)
+            next_token_logits = logits[:, -1, :]
