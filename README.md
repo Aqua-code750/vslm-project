@@ -31,6 +31,7 @@ pipeline_tag: text-generation
 [![GitHub](https://img.shields.io/badge/GitHub-Aqua--code750%2Fvslm--project-181717?style=for-the-badge&logo=github)](https://github.com/Aqua-code750/vslm-project)
 
 **Mog1 AI (VSLM)** is a state-of-the-art, ultra-fast **3.3 Million Parameter Small Language Model** built completely **from scratch in PyTorch** with zero black-box dependencies. Created by **Aqua-code750** & **Aquaholograph2014**. Designed for 0.05s ultra-low latency inference, multi-domain intelligence (Code, Math, Science, Live Weather, World Facts), and 24/7 continuous cloud execution.
+<img width="63" height="55" alt="image" src="https://github.com/user-attachments/assets/8fabdeca-4397-4493-9af6-79cf22e8e50d" />
 
 ---
 
