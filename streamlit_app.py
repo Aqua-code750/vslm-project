@@ -7,6 +7,7 @@ import torch
 
 from model import Mog1, Mog1Config
 from dataset import SubwordTokenizer
+import safety
 
 st.set_page_config(
     page_title="Mog1 AI — Neural Small Language Model",
@@ -247,18 +248,46 @@ def find_grounded_response(query: str):
     return best_resp, best_score
 
 def stream_tokens(user_query: str):
+    # 0. Safety & Moderation Firewall Check
+    is_safe, safety_reason = safety.is_safe_prompt(user_query)
+    if not is_safe:
+        refusal = f"🛡️ **Safety Guardrail**: I cannot process this prompt ({safety_reason}). Please keep questions constructive, respectful, and safe."
+        for word in refusal.split(' '):
+            yield word + ' '
+            time.sleep(0.012)
+        return
+
     # Check if this is an explicit teaching/learning command
     teach_match = detect_learning_prompt(user_query)
     if teach_match:
         learned_q, learned_a = teach_match
+        q_safe, q_reason = safety.is_safe_prompt(learned_q)
+        a_safe, a_reason = safety.is_safe_prompt(learned_a)
+        if not q_safe or not a_safe:
+            msg = f"🛡️ **Safety Guardrail**: Cannot memorize this input ({q_reason if not q_safe else a_reason}). Poisoning prevention is active."
+            for word in msg.split(' '):
+                yield word + ' '
+                time.sleep(0.012)
+            return
+
         clean_key = learned_q.lower().strip().rstrip('?!.,')
+        # Session-isolated memory: stores in current conversation session
         st.session_state.learned_kb[clean_key] = (learned_q, learned_a)
-        save_learned_knowledge(st.session_state.learned_kb)
+        
+        # Admin check: only persist to disk if admin passcode is verified
+        is_admin = st.session_state.get('is_admin', False)
+        if is_admin:
+            save_learned_knowledge(st.session_state.learned_kb)
+            scope_desc = "Permanently saved to Global Knowledge Base (Admin Verified)."
+        else:
+            scope_desc = "Added to Active Session Memory (Ephemeral Isolation). Other users are protected."
+
         ack = (
-            f"🧠 **Knowledge Base Updated & Memorized!**\n\n"
-            f"• **Topic/Question:** *\"{learned_q}\"*\n"
-            f"• **Learned Answer:** *\"{learned_a}\"*\n\n"
-            f"I have integrated this permanently into my neural memory. Ask me about it anytime to test me!"
+            f"🧠 **Knowledge Memorized!**\n\n"
+            f"• **Concept/Topic:** *\"{learned_q}\"*\n"
+            f"• **Learned Answer:** *\"{learned_a}\"*\n"
+            f"• **Scope:** {scope_desc}\n\n"
+            f"You can now query this concept directly!"
         )
         for word in ack.split(' '):
             yield word + ' '
@@ -278,10 +307,14 @@ def stream_tokens(user_query: str):
     # 2. Real-Time Autonomous Live Learning: search dynamic sources and absorb into knowledge base!
     live_answer = search_live_knowledge(user_query)
     if live_answer:
-        # Automatically absorb this new knowledge into persistent memory
-        clean_key = user_query.lower().strip().rstrip('?!.,')
-        st.session_state.learned_kb[clean_key] = (user_query, live_answer)
-        save_learned_knowledge(st.session_state.learned_kb)
+        # Check safety before absorbing
+        ans_safe, _ = safety.is_safe_prompt(live_answer)
+        if ans_safe:
+            clean_key = user_query.lower().strip().rstrip('?!.,')
+            st.session_state.learned_kb[clean_key] = (user_query, live_answer)
+            # Only persist to disk if admin is enabled
+            if st.session_state.get('is_admin', False):
+                save_learned_knowledge(st.session_state.learned_kb)
         
         learned_prefix = "🧠 *(Acquired & Added to Knowledge Base)*\n\n"
         full_text = learned_prefix + live_answer
@@ -302,34 +335,53 @@ def stream_tokens(user_query: str):
         yield word + ' '
         time.sleep(0.012)
 
-# Sidebar Knowledge Base Metrics
+# Sidebar Knowledge Base Metrics & Admin Gate
 with st.sidebar:
     st.divider()
-    st.markdown("### 🧠 Dynamic Knowledge")
+    st.markdown("### 🧠 Knowledge & Safety")
     total_base = len(base_knowledge)
     total_learned = len(st.session_state.learned_kb)
     st.markdown(f"""
     <div class='metric-card'>
-        <div class='metric-label'>Total Knowledge Items</div>
+        <div class='metric-label'>Total Knowledge Base</div>
         <div class='metric-value'>{total_base + total_learned}</div>
     </div>
     <div class='metric-card'>
-        <div class='metric-label'>Learned from User & Web</div>
-        <div class='metric-value'>+{total_learned} active</div>
+        <div class='metric-label'>Active Learned Memory</div>
+        <div class='metric-value'>+{total_learned} concepts</div>
+    </div>
+    <div class='metric-card'>
+        <div class='metric-label'>Safety Firewall</div>
+        <div class='metric-value' style='color: #4EFA90;'>ACTIVE (Toxicity & Injection Guard)</div>
     </div>
     """, unsafe_allow_html=True)
     
-    with st.expander("📚 Teach Mog1 AI New Knowledge"):
-        st.caption("Teach a custom Q&A pair directly into memory:")
-        t_q = st.text_input("Question / Concept", placeholder="e.g., What is AquaOS?")
-        t_a = st.text_area("Answer / Explanation", placeholder="e.g., AquaOS is a next-gen developer OS...")
-        if st.button("💾 Teach & Save Knowledge", use_container_width=True):
+    with st.expander("🔐 Admin & Permanent Knowledge"):
+        admin_pin = st.text_input("Creator Passcode", type="password", help="Enter passcode to enable permanent global learning")
+        if admin_pin == "aqua750":
+            st.session_state.is_admin = True
+            st.success("✅ Creator Admin Verified: Global Persistence Active")
+        else:
+            st.session_state.is_admin = False
+            st.caption("🔒 Public Mode: Knowledge is session-isolated to prevent poisoning.")
+            
+        t_q = st.text_input("Concept / Question", placeholder="e.g., What is AquaOS?")
+        t_a = st.text_area("Answer / Definition", placeholder="e.g., AquaOS is...")
+        if st.button("💾 Teach & Store Knowledge", use_container_width=True):
             if t_q.strip() and t_a.strip():
-                clean_k = t_q.lower().strip().rstrip('?!.,')
-                st.session_state.learned_kb[clean_k] = (t_q.strip(), t_a.strip())
-                save_learned_knowledge(st.session_state.learned_kb)
-                st.success(f"Learned '{t_q}'! It is now permanently saved.")
-                st.rerun()
+                is_q_safe, q_err = safety.is_safe_prompt(t_q)
+                is_a_safe, a_err = safety.is_safe_prompt(t_a)
+                if not is_q_safe or not is_a_safe:
+                    st.error(f"Cannot save: {q_err if not is_q_safe else a_err}")
+                else:
+                    clean_k = t_q.lower().strip().rstrip('?!.,')
+                    st.session_state.learned_kb[clean_k] = (t_q.strip(), t_a.strip())
+                    if st.session_state.is_admin:
+                        save_learned_knowledge(st.session_state.learned_kb)
+                        st.success(f"Saved globally to disk!")
+                    else:
+                        st.info(f"Saved to your active session!")
+                    st.rerun()
 
 for msg in st.session_state.messages:
     avatar_icon = "🧑‍💻" if msg["role"] == "user" else "⚡"
