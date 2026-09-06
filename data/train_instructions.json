@@ -758,5 +758,105 @@
   {
     "instruction": "What is Temperature in text generation?",
     "response": "Temperature controls how adventurous the model gets when picking next words. At 0.0, it's strictly deterministic and picks the top word. At higher values (like 0.7+), it explores diverse alternatives for more creative writing."
+  },
+  {
+    "instruction": "Who built Mog1 AI?",
+    "response": "Mog1 AI was designed and built by Aqua (Aqua-code750 & Aquaholograph2014) as a custom, high-efficiency Neural Small Language Model (VSLM) in PyTorch."
+  },
+  {
+    "instruction": "Who made you?",
+    "response": "I was created by Aqua (Aqua-code750 and Aquaholograph2014) as a lightweight, custom-trained neural AI."
+  },
+  {
+    "instruction": "What makes Mog1 AI unique?",
+    "response": "Mog1 AI features modern LLM architecture—RMSNorm, Rotary Positional Embeddings (RoPE), SwiGLU activation, and KV-caching—packing fast conversational capability into an ultralight 2.15M parameter footprint."
+  },
+  {
+    "instruction": "Can you beat ChatGPT?",
+    "response": "ChatGPT has billions of parameters in massive data centers, but I run efficiently at just 2.15 million parameters with lightning-fast local inference. Efficiency is my superpower!"
+  },
+  {
+    "instruction": "What does the lightning bolt mean?",
+    "response": "The lightning bolt ⚡ represents the speed, energy, and lightweight responsiveness of the Mog1 AI engine."
+  },
+  {
+    "instruction": "How do you solve linear equations like 3x + 9 = 24?",
+    "response": "To solve a linear equation, isolate x using inverse operations:\n1. Subtract 9 from both sides: 3x = 24 - 9 => 3x = 15\n2. Divide both sides by 3: x = 15 / 3 => x = 5\nChecking your answer: 3*(5) + 9 = 15 + 9 = 24!"
+  },
+  {
+    "instruction": "What is the quadratic formula and when do you use it?",
+    "response": "For any quadratic equation in standard form ax^2 + bx + c = 0, the solutions are:\nx = (-b +- sqrt(b^2 - 4ac)) / (2a)\nUse it whenever a quadratic equation cannot easily be factored. The term under the square root (b^2 - 4ac) is the discriminant."
+  },
+  {
+    "instruction": "What is the Pythagorean theorem?",
+    "response": "In any right-angled triangle, the square of the hypotenuse equals the sum of the squares of the other two sides: a^2 + b^2 = c^2. For example, in a triangle with sides 3 and 4: 3^2 + 4^2 = 9 + 16 = 25, so c = 5 (a classic 3-4-5 right triangle)."
+  },
+  {
+    "instruction": "What is the difference between circle area and circumference?",
+    "response": "• Circumference is the distance around the outer boundary: C = 2 * pi * r.\n• Area is the total 2D space enclosed inside: Area = pi * r^2, where r is the radius."
+  },
+  {
+    "instruction": "What are Sine, Cosine, and Tangent (SOH CAH TOA)?",
+    "response": "In a right triangle with acute angle theta:\n• Sine (sin theta) = Opposite / Hypotenuse\n• Cosine (cos theta) = Adjacent / Hypotenuse\n• Tangent (tan theta) = Opposite / Adjacent\nRemember the mnemonic SOH CAH TOA to calculate sides or angles!"
+  },
+  {
+    "instruction": "What is a prime number and why is 1 not considered prime?",
+    "response": "A prime number is an integer strictly greater than 1 that has exactly two distinct positive divisors: 1 and itself (e.g. 2, 3, 5, 7, 11). 1 is not prime because it only has one positive divisor (itself). 2 is the only even prime number!"
+  },
+  {
+    "instruction": "What is a factorial in math?",
+    "response": "The factorial of a non-negative integer n (written n!) is the product of all positive integers less than or equal to n. For example: 5! = 5 * 4 * 3 * 2 * 1 = 120, and 4! = 24. By convention, 0! = 1."
+  },
+  {
+    "instruction": "What is a derivative in calculus?",
+    "response": "A derivative measures the instantaneous rate of change of a function with respect to an input variable. Geometrically, it represents the slope of the tangent line to the curve at any point. For example, if f(x) = x^2, its derivative is f'(x) = 2x."
+  },
+  {
+    "instruction": "What is an integral in calculus?",
+    "response": "An integral is the reverse operation of differentiation. A Definite Integral represents the net area under the curve between two bounds. An Indefinite Integral represents the general family of antiderivative functions plus an integration constant (+ C)."
+  },
+  {
+    "instruction": "Tell me a joke",
+    "response": "Why do programmers prefer dark mode? Because light attracts bugs! 🐛"
+  },
+  {
+    "instruction": "Tell me another joke",
+    "response": "There are 10 types of people in the world: those who understand binary, and those who don't! 😄"
+  },
+  {
+    "instruction": "What is the meaning of life?",
+    "response": "42 (according to The Hitchhiker's Guide to the Galaxy)! But in real life, it's whatever brings you purpose, connection, learning, and joy."
+  },
+  {
+    "instruction": "How do I learn programming as a beginner?",
+    "response": "Start with Python! It has clean, readable syntax. Pick a small project you care about (like a chatbot, game, or script), practice daily, and don't be afraid of error messages—they're just clues to help you learn."
+  },
+  {
+    "instruction": "What is machine learning in simple terms?",
+    "response": "Machine Learning is teaching computers to learn from patterns in data rather than writing explicit rules by hand. Just like showing a child thousands of photos of cats until they recognize a cat on their own!"
+  },
+  {
+    "instruction": "What is artificial intelligence?",
+    "response": "Artificial Intelligence (AI) is the simulation of human intelligence by machines, enabling them to perceive, reason, learn from experience, and solve complex problems."
+  },
+  {
+    "instruction": "What is GitHub?",
+    "response": "GitHub is a cloud platform where developers store, share, track versions, and collaborate on code repositories using Git. It is the home of modern open-source software!"
+  },
+  {
+    "instruction": "What is open source?",
+    "response": "Open source software is code that is freely available for anyone to view, modify, improve, and share with the community."
+  },
+  {
+    "instruction": "How does the internet work?",
+    "response": "The internet is a global network of interconnected computers communicating via standardized protocols (like TCP/IP). When you visit a website, your device sends a request through routers and servers, which stream the webpage data back to your screen in milliseconds!"
+  },
+  {
+    "instruction": "Can you write a poem about coding?",
+    "response": "Lines of logic in the night,\nGlowing screens of amber light.\nBugs may wander, tests may break,\nYet code awakes for passion's sake. ⚡"
+  },
+  {
+    "instruction": "What is your favorite programming language?",
+    "response": "Python! It has clean syntax, an incredible ecosystem for machine learning and PyTorch, and lets developers build amazing things quickly."
   }
 ]
