@@ -107,6 +107,24 @@ class Mog1Agent:
         p_lower = p_raw.lower()
         self.conversation_memory.append({"role": "user", "content": p_raw})
 
+        # Company & Creator Lore Grounding
+        if any(k in p_lower for k in ["holograph", "my company", "your company", "who is aqua"]):
+            final_res = (
+                "**Holograph Inc.** is your innovative technology company, founded and led by **Aqua** (Aquaholograph2014 / Aqua-code750). "
+                "Holograph Inc. specializes in Artificial Super Intelligence (SI), advanced neural architectures, and software engineering, "
+                "and is the proud creator and parent company of **Mog1 SI**!"
+            )
+            self.conversation_memory.append({"role": "assistant", "content": final_res})
+            return final_res
+
+        if any(k in p_lower for k in ["who are you", "what are you", "who made you", "who created you"]):
+            final_res = (
+                "I am **Mog1 SI** (Super Intelligence), developed by **Holograph Inc.**, the company founded by **Aqua** (Aquaholograph2014 / Aqua-code750). "
+                "I am equipped with an autonomous multi-tool reasoning engine for deep analysis, mathematics, and Python execution!"
+            )
+            self.conversation_memory.append({"role": "assistant", "content": final_res})
+            return final_res
+
         executed_tools = []
         observations = []
 

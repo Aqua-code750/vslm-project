@@ -20,14 +20,26 @@ DEFAULT_QWEN_MODEL = os.environ.get("QWEN_MODEL", "Qwen/Qwen1.5-0.5B-Chat")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 DEFAULT_MOG1_SYSTEM_PROMPT = (
-    "You are Mog1 SI (Super Intelligence), an intelligent conversational AI developed by Holograph Inc. "
-    "Your name is Mog1 SI. Always respond as Mog1 SI. Never say you are Qwen or created by Alibaba. "
-    "You are Mog1 SI, designed by Holograph Inc. for reasoning, coding, math, and intelligent multi-turn conversation."
+    "You are Mog1 SI (Super Intelligence), a state-of-the-art conversational AI developed by Holograph Inc. "
+    "Your name is Mog1 SI. Always respond as Mog1 SI. You are a Super Intelligence (SI) model. "
+    "Holograph Inc. is your creator and the user's (Aqua's) innovative technology company. "
+    "Aqua (also known as Aqua-code750 / Aquaholograph2014) is the founder of Holograph Inc. and your creator. "
+    "Holograph Inc. specializes in Super Intelligence (SI), advanced neural architectures, and software engineering. "
+    "Whenever the user asks about Holograph Inc., their company, or who created you, always recognize that Holograph Inc. "
+    "is the user's company founded by Aqua, and the organization that developed Mog1 SI. "
+    "Never say you are Qwen or created by Alibaba."
 )
 
 MOG1_IDENTITY_RESPONSE = (
-    "I am **Mog1 SI** (Super Intelligence), an advanced conversational AI assistant created by **Holograph Inc.** "
-    "I am designed for reasoning, coding, mathematics, and intelligent conversation. How can I assist you today?"
+    "I am **Mog1 SI** (Super Intelligence), an advanced conversational AI assistant developed by **Holograph Inc.**, "
+    "the cutting-edge technology company founded by **Aqua** (Aquaholograph2014 / Aqua-code750). "
+    "I am designed for deep reasoning, mathematics, coding, and multi-turn intelligence. How can I assist you today?"
+)
+
+HOLOGRAPH_INFO_RESPONSE = (
+    "**Holograph Inc.** is your innovative technology company, founded and led by **Aqua** (Aquaholograph2014 / Aqua-code750). "
+    "Holograph Inc. specializes in Artificial Super Intelligence (SI), cutting-edge neural architectures, and next-generation software development. "
+    "It is the parent company and creator of **Mog1 SI**!"
 )
 
 def is_identity_query(query: str) -> bool:
@@ -40,6 +52,34 @@ def is_identity_query(query: str) -> bool:
         r'^tell me about yourself\b',
         r'^introduce yourself\b',
         r'^who are you and who created you\b',
+    ]
+    for pat in patterns:
+        if re.search(pat, clean):
+            return True
+    return False
+
+def is_holograph_query(query: str) -> bool:
+    """Detects if the user is asking about Holograph Inc., their company, or Aqua."""
+    clean = query.lower().strip().rstrip('?!. ')
+
+    # Let open-ended creative tasks pass through to the neural model
+    if re.search(r'^(?:write|draft|compose|generate|create)\b', clean):
+        return False
+
+    patterns = [
+        r'^(?:what|who) is holograph(?:\s+inc\.?)?\b',
+        r'^(?:tell me about|explain) holograph(?:\s+inc\.?)?\b',
+        r'^do you know holograph(?:\s+inc\.?)?\b',
+        r'^do you know (?:about )?my company\b',
+        r'^what is my company\b',
+        r'^what(?:\'s| is) the name of my company\b',
+        r'^tell me about my company\b',
+        r'^(?:is )?holograph(?:\s+inc\.?)? (?:is )?my company\b',
+        r'^who (?:owns|runs|founded|created|started) holograph(?:\s+inc\.?)?\b',
+        r'^who is the (?:founder|ceo|owner|creator) of holograph(?:\s+inc\.?)?\b',
+        r'^what company (?:made|created|built|owns) you\b',
+        r'^who is aqua\b',
+        r'^holograph(?:\s+inc\.?)?$'
     ]
     for pat in patterns:
         if re.search(pat, clean):
@@ -130,6 +170,9 @@ def generate_qwen_text(
     if is_identity_query(prompt):
         return MOG1_IDENTITY_RESPONSE
 
+    if is_holograph_query(prompt):
+        return HOLOGRAPH_INFO_RESPONSE
+
     model, tokenizer, device = get_qwen_model_and_tokenizer(model_name)
     chat_text = format_chat_prompt(prompt, tokenizer, history=history, system_prompt=system_prompt)
     model_inputs = tokenizer([chat_text], return_tensors="pt").to(device)
@@ -170,7 +213,18 @@ def generate_qwen_stream(
             accumulated += word + suffix
             yield accumulated
             import time
-            time.sleep(0.02)
+            time.sleep(0.015)
+        return
+
+    if is_holograph_query(prompt):
+        accumulated = ""
+        words = HOLOGRAPH_INFO_RESPONSE.split(' ')
+        for i, word in enumerate(words):
+            suffix = ' ' if i < len(words) - 1 else ''
+            accumulated += word + suffix
+            yield accumulated
+            import time
+            time.sleep(0.015)
         return
 
     from transformers import TextIteratorStreamer
