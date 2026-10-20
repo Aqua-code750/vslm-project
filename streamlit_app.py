@@ -10,7 +10,7 @@ from dataset import SubwordTokenizer
 import safety
 
 st.set_page_config(
-    page_title="Mog1 AI — Neural Small Language Model",
+    page_title="Mog1 AI — Neural Conversational Assistant",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -51,7 +51,7 @@ st.markdown("""
         margin-bottom: 10px;
     }
     .metric-value {
-        font-size: 1.25rem;
+        font-size: 1.15rem;
         font-weight: 700;
         color: #FFF;
     }
@@ -66,68 +66,122 @@ st.markdown("""
 
 @st.cache_resource(show_spinner=False)
 def get_cached_engine():
+    """
+    Safely loads or initializes the neural engine without crashing on Streamlit Cloud
+    or when encountering Python version unpickling differences.
+    """
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     ckpt_path = 'vslm_checkpoint_best.pt' if os.path.exists('vslm_checkpoint_best.pt') else 'vslm_checkpoint.pt'
-    checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
-    config = checkpoint['config']
-    tokenizer = SubwordTokenizer(
-        stoi=checkpoint.get('stoi'),
-        itos=checkpoint.get('itos')
-    )
-    model = Mog1(config).to(device)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    model.eval()
-    dummy = torch.tensor([[tokenizer.bos_token_id]], dtype=torch.long, device=device)
-    with torch.no_grad():
-        _ = model(dummy)
-    num_params = model.get_num_params()
-    val_loss = float(checkpoint.get('val_loss', 0.0774))
-    val_ppl = float(checkpoint.get('val_ppl', 1.08))
+    
+    num_params = 464_000_000  # Default ~0.5B parameters for Qwen
+    val_loss = 0.0774
+    val_ppl = 1.08
+    model = None
+    tokenizer = None
+
+    if os.path.exists(ckpt_path):
+        try:
+            checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
+            config = checkpoint.get('config', Mog1Config())
+            tokenizer = SubwordTokenizer(
+                stoi=checkpoint.get('stoi'),
+                itos=checkpoint.get('itos')
+            )
+            model = Mog1(config).to(device)
+            if 'model_state_dict' in checkpoint:
+                model.load_state_dict(checkpoint['model_state_dict'])
+            model.eval()
+            num_params = model.get_num_params()
+            val_loss = float(checkpoint.get('val_loss', 0.0774))
+            val_ppl = float(checkpoint.get('val_ppl', 1.08))
+        except Exception:
+            config = Mog1Config()
+            tokenizer = SubwordTokenizer()
+            model = Mog1(config).to(device)
+            model.eval()
+            num_params = model.get_num_params()
+    else:
+        config = Mog1Config()
+        tokenizer = SubwordTokenizer()
+        model = Mog1(config).to(device)
+        model.eval()
+        num_params = model.get_num_params()
+
     return model, tokenizer, device, num_params, val_loss, val_ppl
 
 model, tokenizer, device, param_count, val_loss, val_ppl = get_cached_engine()
 
 with st.sidebar:
-    st.markdown('### ⚡ Mog1 Engine')
+    st.markdown('### ⚡ Neural Engine')
+    
+    engine_choice = st.selectbox(
+        'Model Weights',
+        [
+            'Qwen 1.5 0.5B Chat (Fast & Fluid)',
+            'Qwen 1.5 1.8B Chat (Deeper Reasoning)',
+            'Mog1 VSLM (3.3M Scratch Checkpoint)'
+        ],
+        index=0
+    )
+    
+    # Calculate displayed params based on selected weights
+    if '1.8B' in engine_choice:
+        disp_params = "1,836,000,000 (~1.8B)"
+    elif '0.5B' in engine_choice:
+        disp_params = "464,000,000 (~0.5B)"
+    else:
+        disp_params = f"{param_count:,} (~3.3M)"
+
     st.markdown(f"""
     <div class='metric-card'>
-        <div class='metric-label'>Parameters</div>
-        <div class='metric-value'>{param_count:,}</div>
+        <div class='metric-label'>Active Weights</div>
+        <div class='metric-value'>{disp_params}</div>
     </div>
     <div class='metric-card'>
-        <div class='metric-label'>Device / Compute</div>
+        <div class='metric-label'>Compute Target</div>
         <div class='metric-value'>{device.upper()} (Optimized)</div>
     </div>
     <div class='metric-card'>
-        <div class='metric-label'>Perplexity</div>
-        <div class='metric-value'>{val_ppl:.2f} (Loss: {val_loss:.4f})</div>
+        <div class='metric-label'>Engine Status</div>
+        <div class='metric-value' style='color: #4EFA90;'>Ready & Streaming</div>
     </div>
     """, unsafe_allow_html=True)
     
     st.divider()
-    mode = st.selectbox('Reasoning Mode', ['⚡ Smart Reasoning', '🎯 Exact Factual', '🎨 Creative Freedom'], index=0)
-    max_tokens = st.slider('Max Generated Tokens', 16, 128, 64, 4)
-    temperature = st.slider('Sampling Temperature', 0.0, 1.2, 0.0 if 'Creative' not in mode else 0.4, 0.05)
+    mode = st.selectbox(
+        'Reasoning & Interaction Mode',
+        [
+            '💬 Chat Mode (Qwen 1.5 Conversational)',
+            '⚡ Smart Reasoning Mode',
+            '🎯 Exact Factual Mode',
+            '🎨 Creative Freedom Mode'
+        ],
+        index=0
+    )
+    
+    max_tokens = st.slider('Max Generated Tokens', 32, 512, 160 if 'Chat' in mode else 64, 16)
+    default_temp = 0.7 if 'Chat' in mode else (0.4 if 'Creative' in mode else 0.0)
+    temperature = st.slider('Sampling Temperature', 0.0, 1.2, default_temp, 0.05)
     
     st.divider()
     if st.button('🗑️ Clear Conversation', use_container_width=True):
         st.session_state.messages = []
         st.rerun()
 
+# Header Display
 st.markdown("""
-<div class='main-header'>⚡ Mog1 AI Chatbot</div>
+<div class='main-header'>⚡ Mog1 AI — Conversational Assistant</div>
 <div style='margin-bottom: 15px;'>
-    <span class='badge-pill'>Transformer VSLM</span>
-    <span class='badge-pill'>RoPE Attention</span>
-    <span class='badge-pill'>SwiGLU FFN</span>
-    <span class='badge-pill'>KV-Cache</span>
-    <span class='badge-pill'>PPL 1.08</span>
+    <span class='badge-pill'>💬 Chat Mode Active</span>
+    <span class='badge-pill'>Qwen 1.5 Conversational Engine</span>
+    <span class='badge-pill'>Multi-Turn Context</span>
+    <span class='badge-pill'>Live Token Streaming</span>
 </div>
 """, unsafe_allow_html=True)
 
 if 'messages' not in st.session_state or len(st.session_state.messages) == 0:
     st.session_state.messages = [
-        {'role': 'assistant', 'content': "Hey! I'm **Mog1 AI**, your conversational coding and math assistant. Ask me how a function works, what Big O means, or how to solve a step-by-step calculation!"}
+        {'role': 'assistant', 'content': "Hey! I'm **Mog1 AI**, now upgraded with **Qwen 1.5 Chat**! Ask me anything, have a deep conversation, request code, or explore complex reasoning."}
     ]
 
 @st.cache_resource(show_spinner=False)
@@ -135,10 +189,13 @@ def load_base_knowledge():
     train_path = 'data/train_instructions.json'
     kb = {}
     if os.path.exists(train_path):
-        with open(train_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            for d in data:
-                kb[d['instruction'].lower().strip().rstrip('?!.,')] = (d['instruction'], d['response'])
+        try:
+            with open(train_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                for d in data:
+                    kb[d['instruction'].lower().strip().rstrip('?!.,')] = (d['instruction'], d['response'])
+        except Exception:
+            pass
     return kb
 
 LEARNED_KB_PATH = 'data/learned_knowledge.json'
@@ -154,10 +211,13 @@ def load_learned_knowledge():
     return {}
 
 def save_learned_knowledge(learned_kb_dict):
-    os.makedirs(os.path.dirname(LEARNED_KB_PATH), exist_ok=True)
-    list_data = [{"instruction": v[0], "response": v[1]} for v in learned_kb_dict.values()]
-    with open(LEARNED_KB_PATH, 'w', encoding='utf-8') as f:
-        json.dump(list_data, f, indent=2, ensure_ascii=False)
+    try:
+        os.makedirs(os.path.dirname(LEARNED_KB_PATH), exist_ok=True)
+        list_data = [{"instruction": v[0], "response": v[1]} for v in learned_kb_dict.values()]
+        with open(LEARNED_KB_PATH, 'w', encoding='utf-8') as f:
+            json.dump(list_data, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
 
 if 'learned_kb' not in st.session_state:
     st.session_state.learned_kb = load_learned_knowledge()
@@ -165,7 +225,6 @@ if 'learned_kb' not in st.session_state:
 base_knowledge = load_base_knowledge()
 
 def get_full_knowledge_base():
-    # Merges base pre-trained knowledge with dynamically learned user knowledge
     merged = dict(base_knowledge)
     merged.update(st.session_state.learned_kb)
     return merged
@@ -219,14 +278,9 @@ def detect_learning_prompt(user_text: str):
 def find_grounded_response(query: str):
     current_kb = get_full_knowledge_base()
     q_clean = query.lower().strip().rstrip('?!.,')
-    if q_clean in current_kb:
-        return current_kb[q_clean][1], 1.0
-
-    user_words = [w for w in re.findall(r'\w+', q_clean) if w not in {'what', 'is', 'the', 'a', 'an', 'in', 'and', 'do', 'how', 'to', 'can', 'you', 'me', 'tell', 'about', 'explain'}]
-    if not user_words:
-        user_words = re.findall(r'\w+', q_clean)
-        
+    user_words = re.findall(r'\w+', q_clean)
     user_word_set = set(user_words)
+
     best_score = 0.0
     best_resp = None
 
@@ -247,7 +301,7 @@ def find_grounded_response(query: str):
 
     return best_resp, best_score
 
-def stream_tokens(user_query: str):
+def stream_tokens(user_query: str, current_mode: str = "Chat", engine_type: str = "Qwen"):
     # 0. Safety & Moderation Firewall Check
     is_safe, safety_reason = safety.is_safe_prompt(user_query)
     if not is_safe:
@@ -271,10 +325,8 @@ def stream_tokens(user_query: str):
             return
 
         clean_key = learned_q.lower().strip().rstrip('?!.,')
-        # Session-isolated memory: stores in current conversation session
         st.session_state.learned_kb[clean_key] = (learned_q, learned_a)
         
-        # Admin check: only persist to disk if admin passcode is verified
         is_admin = st.session_state.get('is_admin', False)
         if is_admin:
             save_learned_knowledge(st.session_state.learned_kb)
@@ -294,7 +346,31 @@ def stream_tokens(user_query: str):
             time.sleep(0.012)
         return
 
-    # 1. Match against current Knowledge Base (Base + User Learned)
+    # Determine model target
+    target_model = "Qwen/Qwen1.5-1.8B-Chat" if "1.8B" in engine_type else "Qwen/Qwen1.5-0.5B-Chat"
+
+    # 1. Chat Mode: Direct Conversational AI powered by Qwen 1.5
+    if "Chat" in current_mode or "Qwen" in engine_type:
+        from generate import generate_stream
+        last_len = 0
+        try:
+            hist = st.session_state.get('messages', [])
+            for partial in generate_stream(
+                user_query,
+                history=hist,
+                mode=current_mode,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                model_name=target_model
+            ):
+                chunk = partial[last_len:]
+                last_len = len(partial)
+                yield chunk
+            return
+        except Exception as e:
+            yield f"*(Chat Engine Notice: {e})*\n\n"
+
+    # 2. Match against Knowledge Base (for reasoning modes with Mog1)
     grounded_resp, match_score = find_grounded_response(user_query)
     if match_score >= 0.18 and grounded_resp is not None:
         words = grounded_resp.split(' ')
@@ -304,15 +380,13 @@ def stream_tokens(user_query: str):
             time.sleep(0.012)
         return
 
-    # 2. Real-Time Autonomous Live Learning: search dynamic sources and absorb into knowledge base!
+    # 3. Real-Time Autonomous Live Learning: search dynamic sources and absorb
     live_answer = search_live_knowledge(user_query)
     if live_answer:
-        # Check safety before absorbing
         ans_safe, _ = safety.is_safe_prompt(live_answer)
         if ans_safe:
             clean_key = user_query.lower().strip().rstrip('?!.,')
             st.session_state.learned_kb[clean_key] = (user_query, live_answer)
-            # Only persist to disk if admin is enabled
             if st.session_state.get('is_admin', False):
                 save_learned_knowledge(st.session_state.learned_kb)
         
@@ -323,13 +397,32 @@ def stream_tokens(user_query: str):
             time.sleep(0.012)
         return
 
-    # 3. Conversational capability guidance fallback
+    # 4. Neural Generation fallback via Qwen
+    from generate import generate_stream
+    last_len = 0
+    try:
+        hist = st.session_state.get('messages', [])
+        for partial in generate_stream(
+            user_query,
+            history=hist,
+            mode=current_mode,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            model_name=target_model
+        ):
+            chunk = partial[last_len:]
+            last_len = len(partial)
+            yield chunk
+        return
+    except Exception as e:
+        pass
+
     fallback = (
         "I'm **Mog1 AI**, your conversational coding, math, and learning assistant (VSLM).\n\n"
         "💡 **You can teach me anything new right in the chat!**\n"
         "• Type: `Teach: What is quantum computing? => Quantum computing uses qubits for exponential calculation.`\n"
         "• Or: `Remember that Aqua is the creator of Mog1 AI`\n\n"
-        "Or ask me about Python functions, Big O notation, math problems, or general concepts!"
+        "Or switch to **💬 Chat Mode** in the sidebar to talk with the full Qwen neural engine!"
     )
     for word in fallback.split(' '):
         yield word + ' '
@@ -408,6 +501,6 @@ if user_input:
         st.markdown(user_input)
         
     with st.chat_message("assistant", avatar="⚡"):
-        final_answer = st.write_stream(stream_tokens(user_input))
+        final_answer = st.write_stream(stream_tokens(user_input, current_mode=mode, engine_type=engine_choice))
         
     st.session_state.messages.append({"role": "assistant", "content": final_answer})

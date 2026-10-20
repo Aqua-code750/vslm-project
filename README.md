@@ -102,14 +102,17 @@ Launch the interactive web interface locally or deploy to Hugging Face Spaces:
 python app.py
 ```
 
-### 2. Interactive Terminal CLI Chat
+### 2. Interactive Terminal CLI Chat (Powered by Qwen 1.5 Chat)
 Run the real-time CLI chat in your terminal:
 ```bash
 python chat.py
 ```
 - Type `/smart` to activate Smart Reasoning Mode.
 - Type `/exact` to activate Factual Precision Mode.
-- Type `/auto-train` to trigger background model training.
+- Type `/free` for Creative Freedom Mode.
+- Type `/model 1.8` or `/model 0.5` or `/model 7` to switch Qwen weights.
+- Type `/clear` to clear conversation memory.
+- Set environment variable `QWEN_MODEL="Qwen/Qwen1.5-1.8B-Chat"` or `"Qwen/Qwen1.5-7B-Chat"` to customize default weights.
 
 ### 3. Standalone Generation & Testing
 Generate answers programmatically for any prompt:
