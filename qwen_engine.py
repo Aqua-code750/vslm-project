@@ -44,7 +44,8 @@ def get_qwen_model_and_tokenizer(model_name: Optional[str] = None):
             trust_remote_code=True
         )
 
-        model_dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+        # Always use bfloat16 on CPU and GPU to cut RAM usage by 50% (prevents Streamlit Cloud 1GB OOM crash)
+        model_dtype = torch.bfloat16
 
         model = AutoModelForCausalLM.from_pretrained(
             target_model,

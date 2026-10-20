@@ -170,10 +170,10 @@ with st.sidebar:
 
 # Header Display
 st.markdown("""
-<div class='main-header'>⚡ Mog1 AI — Conversational Assistant</div>
+<div class='main-header'>⚡ Mog1 SI — Super Intelligence</div>
 <div style='margin-bottom: 15px;'>
+    <span class='badge-pill'>🧠 Super Intelligence (SI)</span>
     <span class='badge-pill'>💬 Chat Mode Active</span>
-    <span class='badge-pill'>Qwen 1.5 Conversational Engine</span>
     <span class='badge-pill'>Multi-Turn Context</span>
     <span class='badge-pill'>Live Token Streaming</span>
 </div>
@@ -181,7 +181,7 @@ st.markdown("""
 
 if 'messages' not in st.session_state or len(st.session_state.messages) == 0:
     st.session_state.messages = [
-        {'role': 'assistant', 'content': "Hey! I'm **Mog1 AI**, now upgraded with **Qwen 1.5 Chat**! Ask me anything, have a deep conversation, request code, or explore complex reasoning."}
+        {'role': 'assistant', 'content': "Hey! I'm **Mog1 SI** (Super Intelligence), now equipped with **Chat Mode**! Ask me anything, have a deep conversation, request code, or explore complex reasoning."}
     ]
 
 @st.cache_resource(show_spinner=False)
