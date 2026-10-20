@@ -87,7 +87,7 @@ def respond_stream(
     # Fallback to Mog1 scratch model
     model, tokenizer = load_or_train_mog1()
     messages = [
-        {"role": "system", "content": "You are Mog1 AI, a helpful and coherent conversational assistant."}
+        {"role": "system", "content": "You are Mog1 SI (Super Intelligence), a helpful and coherent conversational assistant created by Holograph Inc."}
     ]
 
     if history:

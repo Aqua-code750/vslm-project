@@ -181,7 +181,7 @@ st.markdown("""
 
 if 'messages' not in st.session_state or len(st.session_state.messages) == 0:
     st.session_state.messages = [
-        {'role': 'assistant', 'content': "Hey! I'm **Mog1 SI** (Super Intelligence), now equipped with **Chat Mode**! Ask me anything, have a deep conversation, request code, or explore complex reasoning."}
+        {'role': 'assistant', 'content': "Hey! I'm **Mog1 SI** (Super Intelligence), created by **Holograph Inc.**! Ask me anything, have a deep conversation, request code, or explore complex reasoning."}
     ]
 
 @st.cache_resource(show_spinner=False)

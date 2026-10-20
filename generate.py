@@ -95,7 +95,7 @@ def generate_text(
     if checkpoint_path is not None or not USE_QWEN:
         model, tokenizer, device = get_loaded_mog1_model_and_tokenizer(checkpoint_path)
         messages = [
-            {"role": "system", "content": "You are Mog1 AI, a helpful and coherent conversational assistant."}
+            {"role": "system", "content": "You are Mog1 SI (Super Intelligence), a helpful and coherent conversational assistant created by Holograph Inc."}
         ]
         if history:
             for turn in history[-3:]:
