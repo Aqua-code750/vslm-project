@@ -163,12 +163,14 @@ def generate_qwen_stream(
 ) -> Generator[str, None, None]:
     """Streaming text generation with strict Mog1 SI identity."""
     if is_identity_query(prompt):
+        accumulated = ""
         words = MOG1_IDENTITY_RESPONSE.split(' ')
         for i, word in enumerate(words):
             suffix = ' ' if i < len(words) - 1 else ''
-            yield word + suffix
+            accumulated += word + suffix
+            yield accumulated
             import time
-            time.sleep(0.015)
+            time.sleep(0.02)
         return
 
     from transformers import TextIteratorStreamer
